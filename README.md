@@ -120,7 +120,7 @@ La matriz se comprueba en `forentrack-web/src/test/.../MatrizPermisosTest.java`.
 
 ## 6. Despliegue en Render
 
-**Opción rápida:** el archivo `render.yaml` es un Blueprint que crea los 8 servicios (*New → Blueprint* y elegir este repositorio). Pide `MONGODB_URI` y `JWT_SECRET` de cada servicio y genera al azar `SEED_PASSWORD` (consúltala en el dashboard, servicio `forentrack-v2-usuarios` → *Environment*).
+**Opción rápida:** el archivo `render.yaml` es un Blueprint que crea los 8 servicios (*New → Blueprint* y elegir este repositorio). Solo pide `MONGODB_URI` (la misma conexión de Atlas para los 6 servicios; el perfil `render` les da bases separadas `forentrack_<servicio>`). Render genera `JWT_SECRET` y `SEED_PASSWORD` en el grupo `forentrack-secretos`: la contraseña de los usuarios de prueba se consulta en *Env Groups → forentrack-secretos*.
 
 **Opción manual:** Cada carpeta tiene su `Dockerfile` (igual que antes). Para los servicios nuevos crea un *Web Service* con *Root Directory*
 `cadena-custodia-service`, `auditoria-service`, `laboratorio-service` y `api-gateway`.

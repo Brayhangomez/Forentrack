@@ -1,12 +1,21 @@
 # Blueprint de Render: crea los 8 servicios de ForenTrack 2.0 (plan gratuito).
-# Render > New > Blueprint > este repositorio. Los valores con sync: false se piden al crear el Blueprint
-# (MONGODB_URI con una base distinta por servicio y el mismo JWT_SECRET en los 6 servicios).
+# Render > New > Blueprint > este repositorio. Solo pide MONGODB_URI (la misma conexión de Atlas en los 6 servicios):
+# el perfil "render" asigna a cada servicio su propia base forentrack_<servicio>.
+# JWT_SECRET y SEED_PASSWORD los genera Render (grupo forentrack-secretos).
 # Si Render asigna una URL distinta a la prevista (nombre ocupado), corrige GATEWAY_API_URL y las *_API_URL.
+envVarGroups:
+  - name: forentrack-secretos
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SEED_PASSWORD
+        generateValue: true
 services:
   - type: web
     name: forentrack-v2-usuarios
     runtime: docker
     plan: free
+    region: virginia
     rootDir: usuarios-service
     dockerfilePath: ./Dockerfile
     buildFilter:
@@ -14,16 +23,16 @@ services:
     envVars:
       - key: MONGODB_URI
         sync: false
-      - key: JWT_SECRET
-        sync: false
+      - fromGroup: forentrack-secretos
+      - key: SPRING_PROFILES_ACTIVE
+        value: render
       - key: GATEWAY_API_URL
         value: https://forentrack-v2-gateway.onrender.com
-      - key: SEED_PASSWORD  # contraseña aleatoria de los usuarios de prueba (se ve en el dashboard)
-        generateValue: true
   - type: web
     name: forentrack-v2-casos
     runtime: docker
     plan: free
+    region: virginia
     rootDir: casos-service
     dockerfilePath: ./Dockerfile
     buildFilter:
@@ -31,14 +40,16 @@ services:
     envVars:
       - key: MONGODB_URI
         sync: false
-      - key: JWT_SECRET
-        sync: false
+      - fromGroup: forentrack-secretos
+      - key: SPRING_PROFILES_ACTIVE
+        value: render
       - key: GATEWAY_API_URL
         value: https://forentrack-v2-gateway.onrender.com
   - type: web
     name: forentrack-v2-evidencias
     runtime: docker
     plan: free
+    region: virginia
     rootDir: evidencias-service
     dockerfilePath: ./Dockerfile
     buildFilter:
@@ -46,14 +57,16 @@ services:
     envVars:
       - key: MONGODB_URI
         sync: false
-      - key: JWT_SECRET
-        sync: false
+      - fromGroup: forentrack-secretos
+      - key: SPRING_PROFILES_ACTIVE
+        value: render
       - key: GATEWAY_API_URL
         value: https://forentrack-v2-gateway.onrender.com
   - type: web
     name: forentrack-v2-custodia
     runtime: docker
     plan: free
+    region: virginia
     rootDir: cadena-custodia-service
     dockerfilePath: ./Dockerfile
     buildFilter:
@@ -61,14 +74,16 @@ services:
     envVars:
       - key: MONGODB_URI
         sync: false
-      - key: JWT_SECRET
-        sync: false
+      - fromGroup: forentrack-secretos
+      - key: SPRING_PROFILES_ACTIVE
+        value: render
       - key: GATEWAY_API_URL
         value: https://forentrack-v2-gateway.onrender.com
   - type: web
     name: forentrack-v2-auditoria
     runtime: docker
     plan: free
+    region: virginia
     rootDir: auditoria-service
     dockerfilePath: ./Dockerfile
     buildFilter:
@@ -76,14 +91,16 @@ services:
     envVars:
       - key: MONGODB_URI
         sync: false
-      - key: JWT_SECRET
-        sync: false
+      - fromGroup: forentrack-secretos
+      - key: SPRING_PROFILES_ACTIVE
+        value: render
       - key: GATEWAY_API_URL
         value: https://forentrack-v2-gateway.onrender.com
   - type: web
     name: forentrack-v2-laboratorio
     runtime: docker
     plan: free
+    region: virginia
     rootDir: laboratorio-service
     dockerfilePath: ./Dockerfile
     buildFilter:
@@ -91,14 +108,16 @@ services:
     envVars:
       - key: MONGODB_URI
         sync: false
-      - key: JWT_SECRET
-        sync: false
+      - fromGroup: forentrack-secretos
+      - key: SPRING_PROFILES_ACTIVE
+        value: render
       - key: GATEWAY_API_URL
         value: https://forentrack-v2-gateway.onrender.com
   - type: web
     name: forentrack-v2-gateway
     runtime: docker
     plan: free
+    region: virginia
     rootDir: api-gateway
     dockerfilePath: ./Dockerfile
     buildFilter:
@@ -120,6 +139,7 @@ services:
     name: forentrack-v2-web
     runtime: docker
     plan: free
+    region: virginia
     rootDir: forentrack-web
     dockerfilePath: ./Dockerfile
     buildFilter:
