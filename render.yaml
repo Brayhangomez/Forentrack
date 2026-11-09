@@ -1,5 +1,5 @@
 # Blueprint de Render: crea los 8 servicios de ForenTrack 2.0 (plan gratuito).
-# Render > New > Blueprint > este repositorio. Solo pide MONGODB_URI (la misma conexión de Atlas en los 6 servicios):
+# Render > New > Blueprint > este repositorio. Solo pide MONGODB_URI en forentrack-v2-usuarios; los demás la toman de ahí:
 # el perfil "render" asigna a cada servicio su propia base forentrack_<servicio>.
 # JWT_SECRET y SEED_PASSWORD los genera Render (grupo forentrack-secretos).
 # Si Render asigna una URL distinta a la prevista (nombre ocupado), corrige GATEWAY_API_URL y las *_API_URL.
@@ -38,8 +38,11 @@ services:
     buildFilter:
       paths: ["casos-service/**"]
     envVars:
-      - key: MONGODB_URI
-        sync: false
+      - key: MONGODB_URI  # misma conexión de Atlas que forentrack-v2-usuarios (cada servicio usa su base)
+        fromService:
+          type: web
+          name: forentrack-v2-usuarios
+          envVarKey: MONGODB_URI
       - fromGroup: forentrack-secretos
       - key: SPRING_PROFILES_ACTIVE
         value: render
@@ -55,8 +58,11 @@ services:
     buildFilter:
       paths: ["evidencias-service/**"]
     envVars:
-      - key: MONGODB_URI
-        sync: false
+      - key: MONGODB_URI  # misma conexión de Atlas que forentrack-v2-usuarios (cada servicio usa su base)
+        fromService:
+          type: web
+          name: forentrack-v2-usuarios
+          envVarKey: MONGODB_URI
       - fromGroup: forentrack-secretos
       - key: SPRING_PROFILES_ACTIVE
         value: render
@@ -72,8 +78,11 @@ services:
     buildFilter:
       paths: ["cadena-custodia-service/**"]
     envVars:
-      - key: MONGODB_URI
-        sync: false
+      - key: MONGODB_URI  # misma conexión de Atlas que forentrack-v2-usuarios (cada servicio usa su base)
+        fromService:
+          type: web
+          name: forentrack-v2-usuarios
+          envVarKey: MONGODB_URI
       - fromGroup: forentrack-secretos
       - key: SPRING_PROFILES_ACTIVE
         value: render
@@ -89,8 +98,11 @@ services:
     buildFilter:
       paths: ["auditoria-service/**"]
     envVars:
-      - key: MONGODB_URI
-        sync: false
+      - key: MONGODB_URI  # misma conexión de Atlas que forentrack-v2-usuarios (cada servicio usa su base)
+        fromService:
+          type: web
+          name: forentrack-v2-usuarios
+          envVarKey: MONGODB_URI
       - fromGroup: forentrack-secretos
       - key: SPRING_PROFILES_ACTIVE
         value: render
@@ -106,8 +118,11 @@ services:
     buildFilter:
       paths: ["laboratorio-service/**"]
     envVars:
-      - key: MONGODB_URI
-        sync: false
+      - key: MONGODB_URI  # misma conexión de Atlas que forentrack-v2-usuarios (cada servicio usa su base)
+        fromService:
+          type: web
+          name: forentrack-v2-usuarios
+          envVarKey: MONGODB_URI
       - fromGroup: forentrack-secretos
       - key: SPRING_PROFILES_ACTIVE
         value: render
