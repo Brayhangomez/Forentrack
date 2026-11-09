@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Registrar caso')}"></head>
+<body>
+<div class="ft-app">
+    <aside th:replace="~{fragments :: sidebar('casos')}"></aside>
+    <div class="ft-main">
+        <header th:replace="~{fragments :: topbar('Registrar caso')}"></header>
+        <main class="ft-content">
+            <th:block th:replace="~{fragments :: alertas}"></th:block>
+
+            <div class="ft-breadcrumb"><a th:href="@{/casos}"><i class="bi bi-arrow-left"></i> Casos</a></div>
+            <div class="ft-page-head">
+                <div>
+                    <h1>Registrar caso</h1>
+                    <p>El caso queda <strong>ABIERTO</strong> hasta que el fiscal asigne un investigador.</p>
+                </div>
+            </div>
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <form th:action="@{/casos}" th:object="${form}" method="post" class="ft-card needs-validation" novalidate>
+                        <div class="ft-card__body">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label" for="codigo">Código del caso</label>
+                                    <input type="text" id="codigo" class="form-control ft-mono text-uppercase" th:field="*{codigo}"
+                                           required maxlength="30" placeholder="CASO-2026-001"
+                                           th:classappend="${#fields.hasErrors('codigo')} ? 'is-invalid'">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('codigo')}" th:errors="*{codigo}">Error</div>
+                                    <div class="invalid-feedback" th:unless="${#fields.hasErrors('codigo')}">El código es obligatorio.</div>
+                                </div>
+                                <div class="col-md-8">
+                                    <label class="form-label" for="titulo">Título</label>
+                                    <input type="text" id="titulo" class="form-control" th:field="*{titulo}" required maxlength="150"
+                                           th:classappend="${#fields.hasErrors('titulo')} ? 'is-invalid'">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('titulo')}" th:errors="*{titulo}">Error</div>
+                                    <div class="invalid-feedback" th:unless="${#fields.hasErrors('titulo')}">El título es obligatorio.</div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label" for="descripcion">Descripción de los hechos</label>
+                                    <textarea id="descripcion" rows="6" class="form-control" th:field="*{descripcion}" required maxlength="2000"
+                                              th:classappend="${#fields.hasErrors('descripcion')} ? 'is-invalid'"></textarea>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('descripcion')}" th:errors="*{descripcion}">Error</div>
+                                    <div class="invalid-feedback" th:unless="${#fields.hasErrors('descripcion')}">La descripción es obligatoria.</div>
+                                    <div class="form-text">Máximo 2000 caracteres.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ft-card__body border-top d-flex gap-2 justify-content-end">
+                            <a class="btn btn-soft" th:href="@{/casos}">Cancelar</a>
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-check2"></i>Registrar caso</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-lg-4">
+                    <section class="ft-card">
+                        <div class="ft-card__head"><h2><i class="bi bi-signpost-split"></i>Ciclo del caso</h2></div>
+                        <div class="ft-card__body">
+                            <ol class="ft-timeline">
+                                <li><span class="ft-timeline__punto t-azul"><i class="bi bi-1-circle"></i></span>
+                                    <div class="ft-timeline__titulo">Abierto</div><div class="ft-timeline__meta">Lo registra el investigador</div></li>
+                                <li><span class="ft-timeline__punto t-indigo"><i class="bi bi-2-circle"></i></span>
+                                    <div class="ft-timeline__titulo">Asignado</div><div class="ft-timeline__meta">El fiscal asigna el investigador</div></li>
+                                <li><span class="ft-timeline__punto t-ambar"><i class="bi bi-3-circle"></i></span>
+                                    <div class="ft-timeline__titulo">En investigación</div><div class="ft-timeline__meta">El investigador asignado la inicia</div></li>
+                                <li><span class="ft-timeline__punto t-verde"><i class="bi bi-4-circle"></i></span>
+                                    <div class="ft-timeline__titulo">Cerrado</div><div class="ft-timeline__meta">El fiscal lo cierra con concepto legal favorable</div></li>
+                            </ol>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragments :: scripts}"></th:block>
+</body>
+</html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Cadena de custodia')}"></head>
+<body>
+<div class="ft-app">
+    <aside th:replace="~{fragments :: sidebar('custodia')}"></aside>
+    <div class="ft-main">
+        <header th:replace="~{fragments :: topbar('Cadena de custodia')}"></header>
+        <main class="ft-content">
+            <th:block th:replace="~{fragments :: alertas}"></th:block>
+
+            <div class="ft-page-head">
+                <div>
+                    <h1>Cadena de custodia</h1>
+                    <p>Cada entrega, recepción, traslado y devolución queda registrada y no se puede modificar.</p>
+                </div>
+            </div>
+
+            <section class="ft-card mb-4">
+                <div class="ft-card__head">
+                    <h2><i class="bi bi-box-arrow-in-down"></i>Entregas pendientes de recepción</h2>
+                    <span class="ft-badge t-azul" th:text="${#lists.size(pendientes)}">0</span>
+                </div>
+                <div class="table-responsive" th:unless="${#lists.isEmpty(pendientes)}">
+                    <table class="table ft-table align-middle">
+                        <thead><tr><th>Evidencia</th><th>Caso</th><th class="d-none d-md-table-cell">Entregada por</th>
+                            <th class="d-none d-md-table-cell">Destino</th><th>Fecha</th><th></th></tr></thead>
+                        <tbody>
+                        <tr th:each="m : ${pendientes}">
+                            <td><span class="ft-codigo" th:text="${m.evidenciaCodigo}">EV</span></td>
+                            <td th:text="${m.casoCodigo}">CASO</td>
+                            <td class="d-none d-md-table-cell" th:text="${m.responsable}">tecnico</td>
+                            <td class="d-none d-md-table-cell" th:text="${m.destino}">destino</td>
+                            <td class="ft-sub" th:text="${@ui.fecha(m.fecha)}">fecha</td>
+                            <td class="text-end">
+                                <a class="btn btn-sm" th:classappend="${puede.contains('CUSTODIA_RECIBIR')} ? 'btn-primary' : 'btn-soft'"
+                                   th:href="@{/evidencias/{id}(id=${m.evidenciaId})}">
+                                    <span th:text="${puede.contains('CUSTODIA_RECIBIR')} ? 'Recibir' : 'Ver'">Ver</span></a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <th:block th:if="${#lists.isEmpty(pendientes)}">
+                    <div th:replace="~{fragments :: vacio('bi-inbox', 'No hay entregas pendientes de recepción.')}"></div></th:block>
+            </section>
+
+            <section class="ft-card">
+                <div class="ft-card__head"><h2><i class="bi bi-link-45deg"></i>Movimientos recientes</h2></div>
+                <nav class="ft-tabs" aria-label="Filtrar por tipo">
+                    <a th:href="@{/custodia}" th:classappend="${tipoSel == null or tipoSel == ''} ? 'activo'">Todos</a>
+                    <a th:each="t : ${tiposMovimiento}" th:href="@{/custodia(tipo=${t})}" th:classappend="${t == tipoSel} ? 'activo'"
+                       th:text="${@ui.etiqueta(t)}">Tipo</a>
+                </nav>
+                <div class="table-responsive" th:unless="${#lists.isEmpty(movimientos)}">
+                    <table class="table ft-table align-middle">
+                        <thead><tr><th>Tipo</th><th>Evidencia</th><th class="d-none d-lg-table-cell">Origen → destino</th>
+                            <th class="d-none d-md-table-cell">Responsable</th><th>Fecha</th></tr></thead>
+                        <tbody>
+                        <tr th:each="m : ${movimientos}">
+                            <td><span class="ft-badge" th:classappend="${@ui.tono(m.tipo)}" th:text="${@ui.etiqueta(m.tipo)}">Tipo</span></td>
+                            <td><a th:href="@{/evidencias/{id}(id=${m.evidenciaId})}" class="ft-codigo text-decoration-none" th:text="${m.evidenciaCodigo}">EV</a></td>
+                            <td class="d-none d-lg-table-cell ft-sub"><span th:text="${m.origen}">origen</span> → <span th:text="${m.destino}">destino</span></td>
+                            <td class="d-none d-md-table-cell"><span th:text="${m.responsable}">resp</span>
+                                <div class="ft-sub" th:text="${@ui.etiqueta(m.rolResponsable)}">rol</div></td>
+                            <td class="ft-sub" th:text="${@ui.fecha(m.fecha)}">fecha</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <th:block th:if="${#lists.isEmpty(movimientos)}">
+                    <div th:replace="~{fragments :: vacio('bi-link-45deg', 'Sin movimientos registrados.')}"></div></th:block>
+            </section>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragments :: scripts}"></th:block>
+</body>
+</html>

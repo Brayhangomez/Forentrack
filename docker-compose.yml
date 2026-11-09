@@ -1,0 +1,89 @@
+# Arranque local opcional de toda la plataforma: copia .env.example a .env, define JWT_SECRET y ejecuta
+#   docker compose up --build
+# En Render cada carpeta se despliega por separado con su propio Dockerfile.
+x-servicio: &servicio
+  restart: unless-stopped
+  depends_on: [mongo]
+
+services:
+  mongo:
+    image: mongo:7
+    ports: ["27017:27017"]
+    volumes: [mongo-datos:/data/db]
+
+  usuarios-service:
+    <<: *servicio
+    build: ./usuarios-service
+    ports: ["8081:8081"]
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/usuarios_db
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env}
+      GATEWAY_API_URL: http://api-gateway:8090
+
+  casos-service:
+    <<: *servicio
+    build: ./casos-service
+    ports: ["8082:8082"]
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/casos_db
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env}
+      GATEWAY_API_URL: http://api-gateway:8090
+
+  evidencias-service:
+    <<: *servicio
+    build: ./evidencias-service
+    ports: ["8083:8083"]
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/evidencias_db
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env}
+      GATEWAY_API_URL: http://api-gateway:8090
+
+  cadena-custodia-service:
+    <<: *servicio
+    build: ./cadena-custodia-service
+    ports: ["8084:8084"]
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/custodia_db
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env}
+      GATEWAY_API_URL: http://api-gateway:8090
+
+  auditoria-service:
+    <<: *servicio
+    build: ./auditoria-service
+    ports: ["8085:8085"]
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/auditoria_db
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env}
+      GATEWAY_API_URL: http://api-gateway:8090
+
+  laboratorio-service:
+    <<: *servicio
+    build: ./laboratorio-service
+    ports: ["8086:8086"]
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/laboratorio_db
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env}
+      GATEWAY_API_URL: http://api-gateway:8090
+
+  api-gateway:
+    build: ./api-gateway
+    restart: unless-stopped
+    ports: ["8090:8090"]
+    environment:
+      USUARIOS_API_URL: http://usuarios-service:8081
+      CASOS_API_URL: http://casos-service:8082
+      EVIDENCIAS_API_URL: http://evidencias-service:8083
+      CUSTODIA_API_URL: http://cadena-custodia-service:8084
+      AUDITORIA_API_URL: http://auditoria-service:8085
+      LABORATORIO_API_URL: http://laboratorio-service:8086
+
+  forentrack-web:
+    build: ./forentrack-web
+    restart: unless-stopped
+    depends_on: [api-gateway]
+    ports: ["8080:8080"]
+    environment:
+      GATEWAY_API_URL: http://api-gateway:8090
+
+volumes:
+  mongo-datos:

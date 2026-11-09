@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Crear usuario')}"></head>
+<body>
+<div class="ft-app">
+    <aside th:replace="~{fragments :: sidebar('usuarios')}"></aside>
+    <div class="ft-main">
+        <header th:replace="~{fragments :: topbar('Crear usuario')}"></header>
+        <main class="ft-content">
+            <th:block th:replace="~{fragments :: alertas}"></th:block>
+
+            <div class="ft-breadcrumb"><a th:href="@{/usuarios}"><i class="bi bi-arrow-left"></i> Usuarios</a></div>
+            <div class="ft-page-head"><div><h1>Crear usuario</h1><p>Cada rol tiene acciones exclusivas; elige el que corresponde a la función real.</p></div></div>
+            <div class="row g-4">
+                <div class="col-lg-7">
+                    <form th:action="@{/usuarios}" th:object="${form}" method="post" class="ft-card needs-validation" novalidate>
+                        <div class="ft-card__body">
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="form-label" for="nombreCompleto">Nombre completo</label>
+                                    <input type="text" id="nombreCompleto" class="form-control" th:field="*{nombreCompleto}" required maxlength="120"
+                                           th:classappend="${#fields.hasErrors('nombreCompleto')} ? 'is-invalid'">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('nombreCompleto')}" th:errors="*{nombreCompleto}">Error</div>
+                                    <div class="invalid-feedback" th:unless="${#fields.hasErrors('nombreCompleto')}">El nombre es obligatorio.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="correo">Correo</label>
+                                    <input type="email" id="correo" class="form-control" th:field="*{correo}" required autocomplete="off"
+                                           th:classappend="${#fields.hasErrors('correo')} ? 'is-invalid'">
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('correo')}" th:errors="*{correo}">Error</div>
+                                    <div class="invalid-feedback" th:unless="${#fields.hasErrors('correo')}">Escribe un correo válido.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label" for="contrasena">Contraseña inicial</label>
+                                    <div class="input-group has-validation">
+                                        <input type="password" id="contrasena" class="form-control" th:field="*{contrasena}" required minlength="8" maxlength="72"
+                                               autocomplete="new-password" th:classappend="${#fields.hasErrors('contrasena')} ? 'is-invalid'">
+                                        <button class="btn btn-soft" type="button" data-ver-clave="#contrasena" aria-label="Mostrar contraseña"><i class="bi bi-eye"></i></button>
+                                        <div class="invalid-feedback" th:if="${#fields.hasErrors('contrasena')}" th:errors="*{contrasena}">Error</div>
+                                        <div class="invalid-feedback" th:unless="${#fields.hasErrors('contrasena')}">Entre 8 y 72 caracteres.</div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label" for="rol">Rol</label>
+                                    <select id="rol" class="form-select" th:field="*{rol}" required data-rol-selector
+                                            th:classappend="${#fields.hasErrors('rol')} ? 'is-invalid'">
+                                        <option value="">Selecciona un rol</option>
+                                        <option th:each="r : ${roles}" th:value="${r.name()}" th:text="${r.etiqueta}">Rol</option>
+                                    </select>
+                                    <div class="invalid-feedback">Selecciona un rol.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="ft-card__body border-top d-flex gap-2 justify-content-end">
+                            <a class="btn btn-soft" th:href="@{/usuarios}">Cancelar</a>
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-person-plus"></i>Crear usuario</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-lg-5">
+                    <section class="ft-card">
+                        <div class="ft-card__head"><h2><i class="bi bi-star"></i>Acciones exclusivas del rol</h2></div>
+                        <div class="ft-card__body">
+                            <p class="text-muted mb-0" data-rol-vacio>Elige un rol para ver lo que solo ese rol puede hacer.</p>
+                            <div th:each="entrada : ${matriz}" th:attr="data-rol-info=${entrada.key}" hidden>
+                                <div class="ft-permiso ft-permiso--exclusivo" th:each="x : ${entrada.value}">
+                                    <span class="ft-permiso__icono"><i class="bi" th:classappend="${x.icono}"></i></span>
+                                    <div><div class="fw-semibold" th:text="${x.etiqueta}">Acción</div>
+                                        <div class="small text-muted" th:text="${x.descripcion}">Descripción</div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragments :: scripts}"></th:block>
+</body>
+</html>

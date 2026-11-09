@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Casos')}"></head>
+<body>
+<div class="ft-app">
+    <aside th:replace="~{fragments :: sidebar('casos')}"></aside>
+    <div class="ft-main">
+        <header th:replace="~{fragments :: topbar('Casos')}"></header>
+        <main class="ft-content">
+            <th:block th:replace="~{fragments :: alertas}"></th:block>
+
+            <div class="ft-page-head">
+                <div>
+                    <h1>Casos</h1>
+                    <p><span th:text="${#lists.size(casos)}">0</span> caso(s) con los filtros actuales.</p>
+                </div>
+                <a class="btn btn-primary" th:href="@{/casos/nuevo}" th:if="${puede.contains('CASO_CREAR')}">
+                    <i class="bi bi-folder-plus"></i>Registrar caso</a>
+            </div>
+
+            <section class="ft-card">
+                <nav class="ft-tabs" aria-label="Filtrar por estado">
+                    <a th:href="@{/casos(codigo=${codigo},mios=${mios})}" th:classappend="${estadoSel == null or estadoSel == ''} ? 'activo'">Todos</a>
+                    <a th:each="e : ${estados}" th:href="@{/casos(estado=${e},codigo=${codigo},mios=${mios})}"
+                       th:classappend="${e == estadoSel} ? 'activo'" th:text="${@ui.etiqueta(e)}">Estado</a>
+                </nav>
+                <form th:action="@{/casos}" method="get" class="ft-filtros">
+                    <input type="hidden" name="estado" th:value="${estadoSel}">
+                    <div class="input-group" style="max-width: 340px">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                        <input type="search" name="codigo" class="form-control" placeholder="Buscar por código" th:value="${codigo}">
+                    </div>
+                    <div class="form-check form-switch m-0" th:if="${puede.contains('CASO_INICIAR')}">
+                        <input class="form-check-input" type="checkbox" role="switch" id="mios" name="mios" value="true" th:checked="${mios}">
+                        <label class="form-check-label" for="mios">Solo mis casos</label>
+                    </div>
+                    <button type="submit" class="btn btn-soft"><i class="bi bi-funnel"></i>Filtrar</button>
+                    <a class="btn btn-link text-muted" th:href="@{/casos}">Limpiar</a>
+                </form>
+
+                <div class="table-responsive" th:unless="${#lists.isEmpty(casos)}">
+                    <table class="table ft-table align-middle">
+                        <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Caso</th>
+                            <th>Estado</th>
+                            <th class="d-none d-md-table-cell">Investigador</th>
+                            <th class="d-none d-lg-table-cell">Concepto legal</th>
+                            <th class="d-none d-md-table-cell">Registro</th>
+                            <th class="text-end"><span class="visually-hidden">Abrir</span></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="c : ${casos}">
+                            <td><span class="ft-codigo" th:text="${c.codigo}">CASO-001</span></td>
+                            <td style="min-width: 220px">
+                                <div class="fw-semibold" th:text="${c.titulo}">Título</div>
+                                <div class="ft-sub" th:text="${@ui.recortar(c.descripcion, 90)}">Descripción</div>
+                            </td>
+                            <td><span th:replace="~{fragments :: badge(${c.estado})}"></span></td>
+                            <td class="d-none d-md-table-cell">
+                                <span th:if="${c.investigadorAsignado != null}"
+                                      th:text="${c.investigadorNombre != null ? c.investigadorNombre : c.investigadorAsignado}">Investigador</span>
+                                <span th:unless="${c.investigadorAsignado != null}" class="text-muted">Sin asignar</span>
+                            </td>
+                            <td class="d-none d-lg-table-cell">
+                                <th:block th:if="${c.conceptoLegal != null}"><span th:replace="~{fragments :: badge(${c.conceptoLegal})}"></span></th:block>
+                                <span th:unless="${c.conceptoLegal != null}" class="text-muted">Pendiente</span>
+                            </td>
+                            <td class="d-none d-md-table-cell ft-sub" th:text="${@ui.fecha(c.fechaCreacion)}">fecha</td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-soft" th:href="@{/casos/{id}(id=${c.id})}">Abrir <i class="bi bi-chevron-right ms-1 me-0"></i></a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <th:block th:if="${#lists.isEmpty(casos)}"><div th:replace="~{fragments :: vacio('bi-folder2-open', 'No se encontraron casos con esos criterios.')}"></div></th:block>
+            </section>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragments :: scripts}"></th:block>
+</body>
+</html>

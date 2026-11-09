@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Evidencias')}"></head>
+<body>
+<div class="ft-app">
+    <aside th:replace="~{fragments :: sidebar('evidencias')}"></aside>
+    <div class="ft-main">
+        <header th:replace="~{fragments :: topbar('Evidencias')}"></header>
+        <main class="ft-content">
+            <th:block th:replace="~{fragments :: alertas}"></th:block>
+
+            <div class="ft-page-head">
+                <div>
+                    <h1>Evidencias</h1>
+                    <p><span th:text="${#lists.size(evidencias)}">0</span> evidencia(s) con los filtros actuales.</p>
+                </div>
+                <a class="btn btn-primary" th:href="@{/evidencias/nuevo}" th:if="${puede.contains('EVIDENCIA_REGISTRAR')}">
+                    <i class="bi bi-plus-square"></i>Registrar evidencia</a>
+            </div>
+
+            <section class="ft-card">
+                <form th:action="@{/evidencias}" method="get" class="ft-filtros">
+                    <select name="casoId" class="form-select" style="max-width: 320px" aria-label="Caso">
+                        <option value="">Todos los casos</option>
+                        <option th:each="c : ${casos}" th:value="${c.id}" th:selected="${c.id == casoSel}"
+                                th:text="${c.codigo + ' · ' + c.titulo}">Caso</option>
+                    </select>
+                    <select name="estado" class="form-select" style="max-width: 200px" aria-label="Estado">
+                        <option value="">Todos los estados</option>
+                        <option th:each="e : ${estados}" th:value="${e}" th:selected="${e == estadoSel}" th:text="${@ui.etiqueta(e)}">Estado</option>
+                    </select>
+                    <select name="tipo" class="form-select" style="max-width: 180px" aria-label="Tipo">
+                        <option value="">Todos los tipos</option>
+                        <option th:each="t : ${tipos}" th:value="${t}" th:selected="${t == tipoSel}" th:text="${@ui.etiqueta(t)}">Tipo</option>
+                    </select>
+                    <button type="submit" class="btn btn-soft"><i class="bi bi-funnel"></i>Filtrar</button>
+                    <a class="btn btn-link text-muted" th:href="@{/evidencias}">Limpiar</a>
+                    <input type="search" class="form-control ms-lg-auto" style="max-width: 220px" placeholder="Buscar en la tabla"
+                           data-filtro-tabla="#tablaEvidencias" aria-label="Buscar en la tabla">
+                </form>
+
+                <div class="table-responsive" th:unless="${#lists.isEmpty(evidencias)}">
+                    <table class="table ft-table align-middle" id="tablaEvidencias">
+                        <thead>
+                        <tr>
+                            <th>Código</th><th>Caso</th><th>Tipo</th>
+                            <th class="d-none d-lg-table-cell">Descripción</th><th>Estado</th>
+                            <th class="d-none d-md-table-cell">Acta</th><th class="d-none d-md-table-cell">Registro</th><th></th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="e : ${evidencias}">
+                            <td><span class="ft-codigo" th:text="${e.codigo}">EV</span></td>
+                            <td><a th:href="@{/casos/{id}(id=${e.casoId})}" th:text="${e.casoCodigo}">CASO</a></td>
+                            <td><span class="ft-tag"><i class="bi" th:classappend="${@ui.icono(e.tipo)}"></i><span th:text="${@ui.etiqueta(e.tipo)}">Tipo</span></span></td>
+                            <td class="d-none d-lg-table-cell ft-sub" th:text="${@ui.recortar(e.descripcion, 70)}">Descripción</td>
+                            <td><span th:replace="~{fragments :: badge(${e.estadoActual})}"></span></td>
+                            <td class="d-none d-md-table-cell">
+                                <i class="bi bi-check-circle-fill text-success" th:if="${e.actaCompleta == true}" title="Acta completa"></i>
+                                <i class="bi bi-exclamation-circle text-warning" th:unless="${e.actaCompleta == true}" title="Acta pendiente"></i>
+                            </td>
+                            <td class="d-none d-md-table-cell ft-sub" th:text="${@ui.fecha(e.fechaRegistro)}">fecha</td>
+                            <td class="text-end"><a class="btn btn-sm btn-soft" th:href="@{/evidencias/{id}(id=${e.id})}">Abrir <i class="bi bi-chevron-right ms-1 me-0"></i></a></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <th:block th:if="${#lists.isEmpty(evidencias)}">
+                    <div th:replace="~{fragments :: vacio('bi-box-seam', 'No hay evidencias con esos criterios.')}"></div></th:block>
+            </section>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragments :: scripts}"></th:block>
+</body>
+</html>

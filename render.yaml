@@ -1,0 +1,129 @@
+# Blueprint de Render: crea los 8 servicios de ForenTrack 2.0 (plan gratuito).
+# Render > New > Blueprint > este repositorio. Los valores con sync: false se piden al crear el Blueprint
+# (MONGODB_URI con una base distinta por servicio y el mismo JWT_SECRET en los 6 servicios).
+# Si Render asigna una URL distinta a la prevista (nombre ocupado), corrige GATEWAY_API_URL y las *_API_URL.
+services:
+  - type: web
+    name: forentrack-v2-usuarios
+    runtime: docker
+    plan: free
+    rootDir: usuarios-service
+    dockerfilePath: ./Dockerfile
+    buildFilter:
+      paths: ["usuarios-service/**"]
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: GATEWAY_API_URL
+        value: https://forentrack-v2-gateway.onrender.com
+      - key: SEED_PASSWORD  # contraseña aleatoria de los usuarios de prueba (se ve en el dashboard)
+        generateValue: true
+  - type: web
+    name: forentrack-v2-casos
+    runtime: docker
+    plan: free
+    rootDir: casos-service
+    dockerfilePath: ./Dockerfile
+    buildFilter:
+      paths: ["casos-service/**"]
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: GATEWAY_API_URL
+        value: https://forentrack-v2-gateway.onrender.com
+  - type: web
+    name: forentrack-v2-evidencias
+    runtime: docker
+    plan: free
+    rootDir: evidencias-service
+    dockerfilePath: ./Dockerfile
+    buildFilter:
+      paths: ["evidencias-service/**"]
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: GATEWAY_API_URL
+        value: https://forentrack-v2-gateway.onrender.com
+  - type: web
+    name: forentrack-v2-custodia
+    runtime: docker
+    plan: free
+    rootDir: cadena-custodia-service
+    dockerfilePath: ./Dockerfile
+    buildFilter:
+      paths: ["cadena-custodia-service/**"]
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: GATEWAY_API_URL
+        value: https://forentrack-v2-gateway.onrender.com
+  - type: web
+    name: forentrack-v2-auditoria
+    runtime: docker
+    plan: free
+    rootDir: auditoria-service
+    dockerfilePath: ./Dockerfile
+    buildFilter:
+      paths: ["auditoria-service/**"]
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: GATEWAY_API_URL
+        value: https://forentrack-v2-gateway.onrender.com
+  - type: web
+    name: forentrack-v2-laboratorio
+    runtime: docker
+    plan: free
+    rootDir: laboratorio-service
+    dockerfilePath: ./Dockerfile
+    buildFilter:
+      paths: ["laboratorio-service/**"]
+    envVars:
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: GATEWAY_API_URL
+        value: https://forentrack-v2-gateway.onrender.com
+  - type: web
+    name: forentrack-v2-gateway
+    runtime: docker
+    plan: free
+    rootDir: api-gateway
+    dockerfilePath: ./Dockerfile
+    buildFilter:
+      paths: ["api-gateway/**"]
+    envVars:
+      - key: USUARIOS_API_URL
+        value: https://forentrack-v2-usuarios.onrender.com
+      - key: CASOS_API_URL
+        value: https://forentrack-v2-casos.onrender.com
+      - key: EVIDENCIAS_API_URL
+        value: https://forentrack-v2-evidencias.onrender.com
+      - key: CUSTODIA_API_URL
+        value: https://forentrack-v2-custodia.onrender.com
+      - key: AUDITORIA_API_URL
+        value: https://forentrack-v2-auditoria.onrender.com
+      - key: LABORATORIO_API_URL
+        value: https://forentrack-v2-laboratorio.onrender.com
+  - type: web
+    name: forentrack-v2-web
+    runtime: docker
+    plan: free
+    rootDir: forentrack-web
+    dockerfilePath: ./Dockerfile
+    buildFilter:
+      paths: ["forentrack-web/**"]
+    envVars:
+      - key: GATEWAY_API_URL
+        value: https://forentrack-v2-gateway.onrender.com

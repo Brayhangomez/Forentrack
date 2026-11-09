@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Detalle del caso')}"></head>
+<body>
+<div class="ft-app">
+    <aside th:replace="~{fragments :: sidebar('casos')}"></aside>
+    <div class="ft-main">
+        <header th:replace="~{fragments :: topbar('Detalle del caso')}"></header>
+        <main class="ft-content">
+            <th:block th:replace="~{fragments :: alertas}"></th:block>
+
+            <div class="ft-breadcrumb"><a th:href="@{/casos}"><i class="bi bi-arrow-left"></i> Casos</a></div>
+            <div class="ft-page-head">
+                <div>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                        <span class="ft-codigo" th:text="${caso.codigo}">CASO</span>
+                        <span th:replace="~{fragments :: badge(${caso.estado})}"></span>
+                        <th:block th:if="${caso.conceptoLegal != null}">
+                            <span class="ft-badge ft-badge--plano" th:classappend="${@ui.tono(caso.conceptoLegal)}">
+                                <i class="bi bi-bank"></i><span th:text="'Concepto ' + ${@ui.etiqueta(caso.conceptoLegal)}">Concepto</span></span>
+                        </th:block>
+                    </div>
+                    <h1 th:text="${caso.titulo}">Título</h1>
+                    <p>Registrado por <span th:text="${caso.creadoPor}">correo</span> ·
+                       <span th:text="${@ui.fecha(caso.fechaCreacion)}">fecha</span></p>
+                </div>
+            </div>
+
+            <div class="ft-panel-acciones" th:if="${hayAcciones}">
+                <div class="ft-acciones__titulo">Acciones disponibles para tu rol</div>
+                <div class="ft-acciones">
+                    <button th:if="${acciones['asignar']}" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#mAsignar">
+                        <i class="bi bi-person-check"></i><span th:text="${caso.investigadorAsignado == null ? 'Asignar investigador' : 'Reasignar investigador'}">Asignar</span></button>
+                    <form th:if="${acciones['iniciar']}" th:action="@{/casos/{id}/inicio(id=${caso.id})}" method="post"
+                          data-confirmar="El caso pasará a EN INVESTIGACIÓN y podrás registrar notas.">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-play-circle"></i>Iniciar investigación</button></form>
+                    <button th:if="${acciones['nota']}" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#mNota">
+                        <i class="bi bi-journal-plus"></i>Agregar nota</button>
+                    <button th:if="${acciones['concepto']}" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#mConcepto">
+                        <i class="bi bi-bank"></i>Emitir concepto legal</button>
+                    <button th:if="${acciones['suspender']}" type="button" class="btn btn-soft" data-bs-toggle="modal" data-bs-target="#mSuspender">
+                        <i class="bi bi-pause-circle"></i>Suspender</button>
+                    <button th:if="${acciones['reactivar']}" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#mReactivar">
+                        <i class="bi bi-arrow-repeat"></i>Reactivar</button>
+                    <th:block th:if="${acciones['cerrar']}">
+                        <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#mCerrar"
+                                th:disabled="${!acciones['cierreHabilitado']}"><i class="bi bi-lock"></i>Cerrar caso</button>
+                        <span class="small text-muted align-self-center" th:unless="${acciones['cierreHabilitado']}">
+                            <i class="bi bi-info-circle"></i> Requiere concepto legal favorable</span>
+                    </th:block>
+                    <a th:if="${acciones['registrarEvidencia']}" class="btn btn-soft" th:href="@{/evidencias/nuevo(casoId=${caso.id})}">
+                        <i class="bi bi-plus-square"></i>Registrar evidencia</a>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <section class="ft-card">
+                        <div class="ft-card__head"><h2><i class="bi bi-card-text"></i>Descripción de los hechos</h2></div>
+                        <div class="ft-card__body"><p class="mb-0" style="white-space: pre-line" th:text="${caso.descripcion}">Descripción</p></div>
+                    </section>
+
+                    <section class="ft-card">
+                        <div class="ft-card__head">
+                            <h2><i class="bi bi-box-seam"></i>Evidencias del caso</h2>
+                            <span class="ft-tag" th:text="${#lists.size(evidencias)} + ' registradas'">0</span>
+                        </div>
+                        <div class="table-responsive" th:unless="${#lists.isEmpty(evidencias)}">
+                            <table class="table ft-table align-middle">
+                                <thead><tr><th>Código</th><th>Tipo</th><th class="d-none d-md-table-cell">Descripción</th><th>Estado</th><th></th></tr></thead>
+                                <tbody>
+                                <tr th:each="e : ${evidencias}">
+                                    <td><span class="ft-codigo" th:text="${e.codigo}">EV</span></td>
+                                    <td><span class="ft-tag"><i class="bi" th:classappend="${@ui.icono(e.tipo)}"></i><span th:text="${@ui.etiqueta(e.tipo)}">Tipo</span></span></td>
+                                    <td class="d-none d-md-table-cell ft-sub" th:text="${@ui.recortar(e.descripcion, 70)}">Descripción</td>
+                                    <td><span th:replace="~{fragments :: badge(${e.estadoActual})}"></span></td>
+                                    <td class="text-end"><a class="btn btn-sm btn-soft" th:href="@{/evidencias/{id}(id=${e.id})}">Ver</a></td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <th:block th:if="${#lists.isEmpty(evidencias)}">
+                            <div th:replace="~{fragments :: vacio('bi-box-seam', 'Este caso aún no tiene evidencias.')}"></div></th:block>
+                    </section>
+
+                    <section class="ft-card">
+                        <div class="ft-card__head"><h2><i class="bi bi-journal-text"></i>Notas de investigación</h2></div>
+                        <div class="ft-card__body" th:unless="${#lists.isEmpty(caso.notas)}">
+                            <ol class="ft-timeline">
+                                <li th:each="n : ${caso.notas}">
+                                    <span class="ft-timeline__punto t-ambar"><i class="bi bi-pencil"></i></span>
+                                    <div class="ft-timeline__meta"><span th:text="${n.autor}">autor</span> · <span th:text="${@ui.fecha(n.fecha)}">fecha</span></div>
+                                    <div class="ft-timeline__texto" style="white-space: pre-line" th:text="${n.texto}">Nota</div>
+                                </li>
+                            </ol>
+                        </div>
+                        <th:block th:if="${#lists.isEmpty(caso.notas)}">
+                            <div th:replace="~{fragments :: vacio('bi-journal', 'Sin notas de investigación.')}"></div></th:block>
+                    </section>
+                </div>
+
+                <div class="col-lg-4">
+                    <section class="ft-card">
+                        <div class="ft-card__head"><h2><i class="bi bi-person-badge"></i>Asignación</h2></div>
+                        <div class="ft-card__body">
+                            <dl class="ft-dl">
+                                <dt>Investigador</dt>
+                                <dd th:text="${caso.investigadorAsignado != null ? (caso.investigadorNombre != null ? caso.investigadorNombre + ' (' + caso.investigadorAsignado + ')' : caso.investigadorAsignado) : 'Sin asignar'}">—</dd>
+                                <dt>Asignado por</dt>
+                                <dd th:text="${caso.asignadoPor != null ? caso.asignadoPor : '—'}">—</dd>
+                                <th:block th:if="${caso.motivoSuspension != null}">
+                                    <dt>Motivo de suspensión</dt><dd th:text="${caso.motivoSuspension}">motivo</dd>
+                                </th:block>
+                                <dt>Actualizado</dt>
+                                <dd th:text="${@ui.fecha(caso.fechaActualizacion)}">—</dd>
+                            </dl>
+                        </div>
+                    </section>
+
+                    <section class="ft-card">
+                        <div class="ft-card__head"><h2><i class="bi bi-bank"></i>Concepto legal</h2></div>
+                        <div class="ft-card__body" th:if="${caso.conceptoLegal != null}">
+                            <span th:replace="~{fragments :: badge(${caso.conceptoLegal})}"></span>
+                            <p class="mt-2 mb-2" style="white-space: pre-line" th:text="${caso.fundamentoLegal}">Fundamento</p>
+                            <div class="small text-muted"><span th:text="${caso.revisorLegal}">revisor</span> · <span th:text="${@ui.fecha(caso.fechaConcepto)}">fecha</span></div>
+                        </div>
+                        <div class="ft-card__body text-muted" th:unless="${caso.conceptoLegal != null}">
+                            Pendiente. El revisor legal lo emite cuando el caso está en investigación o suspendido.
+                        </div>
+                    </section>
+
+                    <section class="ft-card">
+                        <div class="ft-card__head"><h2><i class="bi bi-clock-history"></i>Historial de estados</h2></div>
+                        <div class="ft-card__body" th:unless="${#lists.isEmpty(caso.historial)}">
+                            <ol class="ft-timeline">
+                                <li th:each="h : ${caso.historial}">
+                                    <span class="ft-timeline__punto" th:classappend="${@ui.tono(h.hacia)}"><i class="bi bi-arrow-right"></i></span>
+                                    <div class="ft-timeline__titulo" th:text="${@ui.etiqueta(h.hacia)}">Estado</div>
+                                    <div class="ft-timeline__meta"><span th:text="${h.usuario}">usuario</span> · <span th:text="${@ui.fecha(h.fecha)}">fecha</span></div>
+                                    <div class="small mt-1" th:if="${h.observacion != null}" th:text="${h.observacion}">obs</div>
+                                </li>
+                            </ol>
+                        </div>
+                        <div class="ft-card__body text-muted" th:if="${#lists.isEmpty(caso.historial)}">
+                            Caso registrado antes de la versión 2: sin historial detallado.</div>
+                    </section>
+                </div>
+            </div>
+
+            <!--/* Modales de acciones (solo se generan si el rol puede usarlas) */-->
+            <div class="modal fade" id="mAsignar" tabindex="-1" aria-hidden="true" th:if="${acciones['asignar']}">
+                <div class="modal-dialog modal-dialog-centered">
+                    <form class="modal-content needs-validation" method="post" novalidate th:action="@{/casos/{id}/asignacion(id=${caso.id})}">
+                        <div class="modal-header"><h5 class="modal-title"><i class="bi bi-person-check"></i>Asignar investigador</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+                        <div class="modal-body">
+                            <div class="alert alert-warning ft-alert" th:if="${#lists.isEmpty(investigadores)}">
+                                <i class="bi bi-exclamation-triangle"></i><div>No hay investigadores activos disponibles.</div></div>
+                            <label class="form-label" for="investigadorCorreo">Investigador</label>
+                            <select class="form-select" id="investigadorCorreo" name="investigadorCorreo" required>
+                                <option value="">Selecciona un investigador</option>
+                                <option th:each="i : ${investigadores}" th:value="${i.correo}"
+                                        th:selected="${i.correo == caso.investigadorAsignado}"
+                                        th:text="${i.nombreCompleto + ' · ' + i.correo}">Investigador</option>
+                            </select>
+                            <div class="invalid-feedback">Selecciona un investigador.</div>
+                        </div>
+                        <div class="modal-footer"><button type="button" class="btn btn-soft" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Asignar</button></div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="modal fade" id="mConcepto" tabindex="-1" aria-hidden="true" th:if="${acciones['concepto']}">
+                <div class="modal-dialog modal-dialog-centered">
+                    <form class="modal-content needs-validation" method="post" novalidate th:action="@{/casos/{id}/concepto(id=${caso.id})}">
+                        <div class="modal-header"><h5 class="modal-title"><i class="bi bi-bank"></i>Concepto legal</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+                        <div class="modal-body">
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <input type="radio" class="btn-check" name="concepto" id="cFav" value="FAVORABLE" required>
+                                    <label class="ft-opcion" for="cFav"><i class="bi bi-check2-circle"></i><div class="fw-semibold">Favorable</div>
+                                        <div class="small text-muted">Permite el cierre</div></label>
+                                </div>
+                                <div class="col-6">
+                                    <input type="radio" class="btn-check" name="concepto" id="cDes" value="DESFAVORABLE" required>
+                                    <label class="ft-opcion" for="cDes"><i class="bi bi-x-circle"></i><div class="fw-semibold">Desfavorable</div>
+                                        <div class="small text-muted">Bloquea el cierre</div></label>
+                                </div>
+                            </div>
+                            <label class="form-label" for="fundamento">Fundamento jurídico</label>
+                            <textarea class="form-control" id="fundamento" name="fundamento" rows="5" maxlength="2000" required></textarea>
+                            <div class="invalid-feedback">Elige el concepto y escribe el fundamento.</div>
+                        </div>
+                        <div class="modal-footer"><button type="button" class="btn btn-soft" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Registrar concepto</button></div>
+                    </form>
+                </div>
+            </div>
+
+            <th:block th:if="${acciones['nota']}">
+                <div th:replace="~{fragments :: modalTexto('mNota', 'Agregar nota de investigación', 'bi-journal-plus', @{/casos/{id}/notas(id=${caso.id})}, 'texto', 'Nota', true, 'Guardar nota', 'btn-primary')}"></div>
+            </th:block>
+            <th:block th:if="${acciones['suspender']}">
+                <div th:replace="~{fragments :: modalTexto('mSuspender', 'Suspender caso', 'bi-pause-circle', @{/casos/{id}/suspension(id=${caso.id})}, 'motivo', 'Motivo de la suspensión', true, 'Suspender caso', 'btn-warning')}"></div>
+            </th:block>
+            <th:block th:if="${acciones['reactivar']}">
+                <div th:replace="~{fragments :: modalTexto('mReactivar', 'Reactivar caso', 'bi-arrow-repeat', @{/casos/{id}/reactivacion(id=${caso.id})}, 'observacion', 'Observación', false, 'Reactivar', 'btn-primary')}"></div>
+            </th:block>
+            <th:block th:if="${acciones['cerrar'] and acciones['cierreHabilitado']}">
+                <div th:replace="~{fragments :: modalTexto('mCerrar', 'Cerrar caso', 'bi-lock', @{/casos/{id}/cierre(id=${caso.id})}, 'observacion', 'Observación de cierre', false, 'Cerrar definitivamente', 'btn-dark')}"></div>
+            </th:block>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragments :: scripts}"></th:block>
+</body>
+</html>

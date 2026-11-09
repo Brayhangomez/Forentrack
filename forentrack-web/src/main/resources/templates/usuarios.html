@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Usuarios')}"></head>
+<body>
+<div class="ft-app">
+    <aside th:replace="~{fragments :: sidebar('usuarios')}"></aside>
+    <div class="ft-main">
+        <header th:replace="~{fragments :: topbar('Usuarios')}"></header>
+        <main class="ft-content">
+            <th:block th:replace="~{fragments :: alertas}"></th:block>
+
+            <div class="ft-page-head">
+                <div>
+                    <h1>Usuarios</h1>
+                    <p>Cuentas del sistema y su rol. Desactivar una cuenta no borra su historial.</p>
+                </div>
+                <a class="btn btn-primary" th:href="@{/usuarios/nuevo}" th:if="${puede.contains('USUARIO_CREAR')}">
+                    <i class="bi bi-person-plus"></i>Crear usuario</a>
+            </div>
+            <section class="ft-card">
+                <div class="ft-filtros">
+                    <form th:action="@{/usuarios}" method="get" class="d-flex gap-2 flex-wrap">
+                        <select name="rol" class="form-select" style="max-width: 240px" aria-label="Rol" onchange="this.form.submit()">
+                            <option value="">Todos los roles</option>
+                            <option th:each="r : ${roles}" th:value="${r.name()}" th:text="${r.etiqueta}" th:selected="${r.name() == rolSel}">Rol</option>
+                        </select>
+                        <noscript><button class="btn btn-soft" type="submit">Filtrar</button></noscript>
+                    </form>
+                    <input type="search" class="form-control ms-md-auto" style="max-width: 240px" placeholder="Buscar nombre o correo"
+                           data-filtro-tabla="#tablaUsuarios" aria-label="Buscar">
+                </div>
+                <div class="table-responsive" th:unless="${#lists.isEmpty(usuarios)}">
+                    <table class="table ft-table align-middle" id="tablaUsuarios">
+                        <thead><tr><th>Usuario</th><th>Rol</th><th>Estado</th><th class="d-none d-md-table-cell">Creado</th><th></th></tr></thead>
+                        <tbody>
+                        <tr th:each="u : ${usuarios}">
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="ft-avatar ft-avatar--sm" th:text="${@ui.iniciales(u.nombreCompleto)}">AB</span>
+                                    <div><div class="fw-semibold" th:text="${u.nombreCompleto}">Nombre</div>
+                                        <div class="ft-sub" th:text="${u.correo}">correo</div></div>
+                                </div>
+                            </td>
+                            <td><span class="ft-tag" th:text="${@ui.etiqueta(u.rol)}">Rol</span></td>
+                            <td>
+                                <span class="ft-badge t-verde" th:if="${u.activo == true}">Activo</span>
+                                <span class="ft-badge t-gris" th:unless="${u.activo == true}">Inactivo</span>
+                            </td>
+                            <td class="d-none d-md-table-cell ft-sub" th:text="${@ui.fecha(u.fechaCreacion)}">fecha</td>
+                            <td class="text-end">
+                                <form th:if="${puede.contains('USUARIO_ESTADO') and u.correo != yo.correo}" method="post"
+                                      th:action="@{/usuarios/{id}/estado(id=${u.id})}"
+                                      th:attr="data-confirmar=${u.activo == true ? 'La cuenta ' + u.correo + ' no podrá iniciar sesión.' : 'La cuenta ' + u.correo + ' podrá volver a iniciar sesión.'},data-confirmar-tono=${u.activo == true ? 'btn-danger' : 'btn-primary'}">
+                                    <input type="hidden" name="activo" th:value="${u.activo == true ? 'false' : 'true'}">
+                                    <button type="submit" class="btn btn-sm" th:classappend="${u.activo == true} ? 'btn-outline-danger' : 'btn-outline-primary'">
+                                        <i class="bi" th:classappend="${u.activo == true} ? 'bi-toggle-off' : 'bi-toggle-on'"></i>
+                                        <span th:text="${u.activo == true ? 'Desactivar' : 'Activar'}">Acción</span></button>
+                                </form>
+                                <span class="ft-sub" th:if="${u.correo == yo.correo}">Tu cuenta</span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <th:block th:if="${#lists.isEmpty(usuarios)}">
+                    <div th:replace="~{fragments :: vacio('bi-people', 'No hay usuarios con ese filtro.')}"></div></th:block>
+            </section>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragments :: scripts}"></th:block>
+</body>
+</html>

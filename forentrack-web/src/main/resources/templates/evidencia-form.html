@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Registrar evidencia')}"></head>
+<body>
+<div class="ft-app">
+    <aside th:replace="~{fragments :: sidebar('evidencias')}"></aside>
+    <div class="ft-main">
+        <header th:replace="~{fragments :: topbar('Registrar evidencia')}"></header>
+        <main class="ft-content">
+            <th:block th:replace="~{fragments :: alertas}"></th:block>
+
+            <div class="ft-breadcrumb"><a th:href="@{/evidencias}"><i class="bi bi-arrow-left"></i> Evidencias</a></div>
+            <div class="ft-page-head">
+                <div>
+                    <h1>Registrar evidencia</h1>
+                    <p>El código EV-AAAA-NNNNN se genera automáticamente y no se puede editar.</p>
+                </div>
+            </div>
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <div class="alert alert-warning ft-alert" th:if="${#lists.isEmpty(casos)}">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <div>No hay casos activos (abiertos, asignados o en investigación) para registrar evidencias.</div>
+                    </div>
+                    <form th:action="@{/evidencias}" th:object="${form}" method="post" class="ft-card needs-validation" novalidate>
+                        <div class="ft-card__body">
+                            <div class="mb-3">
+                                <label class="form-label" for="casoId">Caso</label>
+                                <select id="casoId" class="form-select" th:field="*{casoId}" required
+                                        th:classappend="${#fields.hasErrors('casoId')} ? 'is-invalid'">
+                                    <option value="">Selecciona un caso</option>
+                                    <option th:each="c : ${casos}" th:value="${c.id}"
+                                            th:text="${c.codigo + ' · ' + c.titulo + ' (' + @ui.etiqueta(c.estado) + ')'}">Caso</option>
+                                </select>
+                                <div class="invalid-feedback">Selecciona un caso.</div>
+                            </div>
+                            <div class="mb-3">
+                                <span class="form-label d-block">Tipo de evidencia</span>
+                                <div class="row g-2">
+                                    <div class="col-sm-4" th:each="t : ${tipos}">
+                                        <input type="radio" class="btn-check" name="tipo" th:id="${'tipo-' + t}" th:value="${t}"
+                                               th:checked="${form.tipo == t}" required>
+                                        <label class="ft-opcion" th:for="${'tipo-' + t}">
+                                            <i class="bi" th:classappend="${@ui.icono(t)}"></i>
+                                            <div class="fw-semibold" th:text="${@ui.etiqueta(t)}">Tipo</div>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="text-danger small mt-1" th:if="${#fields.hasErrors('tipo')}" th:errors="*{tipo}">Error</div>
+                            </div>
+                            <div>
+                                <label class="form-label" for="descripcion">Descripción</label>
+                                <textarea id="descripcion" rows="5" class="form-control" th:field="*{descripcion}" required maxlength="2000"
+                                          th:classappend="${#fields.hasErrors('descripcion')} ? 'is-invalid'"></textarea>
+                                <div class="invalid-feedback" th:if="${#fields.hasErrors('descripcion')}" th:errors="*{descripcion}">Error</div>
+                                <div class="invalid-feedback" th:unless="${#fields.hasErrors('descripcion')}">La descripción es obligatoria.</div>
+                            </div>
+                        </div>
+                        <div class="ft-card__body border-top d-flex gap-2 justify-content-end">
+                            <a class="btn btn-soft" th:href="@{/evidencias}">Cancelar</a>
+                            <button type="submit" class="btn btn-primary" th:disabled="${#lists.isEmpty(casos)}">
+                                <i class="bi bi-check2"></i>Registrar evidencia</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-lg-4">
+                    <section class="ft-card">
+                        <div class="ft-card__head"><h2><i class="bi bi-list-check"></i>Tus siguientes pasos</h2></div>
+                        <div class="ft-card__body">
+                            <ol class="ft-timeline">
+                                <li><span class="ft-timeline__punto t-azul"><i class="bi bi-1-circle"></i></span>
+                                    <div class="ft-timeline__titulo">Registrar</div><div class="ft-timeline__meta">Queda REGISTRADA</div></li>
+                                <li><span class="ft-timeline__punto t-ambar"><i class="bi bi-2-circle"></i></span>
+                                    <div class="ft-timeline__titulo">Completar el acta</div><div class="ft-timeline__meta">Lugar, fecha y embalaje</div></li>
+                                <li><span class="ft-timeline__punto t-indigo"><i class="bi bi-3-circle"></i></span>
+                                    <div class="ft-timeline__titulo">Entregar a custodia</div><div class="ft-timeline__meta">El custodio la recibe en bodega</div></li>
+                            </ol>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragments :: scripts}"></th:block>
+</body>
+</html>

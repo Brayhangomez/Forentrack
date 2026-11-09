@@ -1,0 +1,13 @@
+package com.forentrack.laboratorio.model;
+
+/**
+ * SOLICITADA (INVESTIGADOR) -> ASIGNADA (JEFE_LABORATORIO) -> EN_PROCESO (PERITO/ANALISTA_DIGITAL)
+ * -> DICTAMINADA (PERITO/ANALISTA_DIGITAL) -> APROBADA (JEFE_LABORATORIO) o vuelve a EN_PROCESO si se rechaza.
+ */
+public enum EstadoSolicitud {
+    SOLICITADA,
+    ASIGNADA,
+    EN_PROCESO,
+    DICTAMINADA,
+    APROBADA
+}

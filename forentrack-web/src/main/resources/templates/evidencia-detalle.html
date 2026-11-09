@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Detalle de evidencia')}"></head>
+<body>
+<div class="ft-app">
+    <aside th:replace="~{fragments :: sidebar('evidencias')}"></aside>
+    <div class="ft-main">
+        <header th:replace="~{fragments :: topbar('Detalle de evidencia')}"></header>
+        <main class="ft-content">
+            <th:block th:replace="~{fragments :: alertas}"></th:block>
+
+            <div class="ft-breadcrumb"><a th:href="@{/evidencias}"><i class="bi bi-arrow-left"></i> Evidencias</a></div>
+            <div class="ft-page-head">
+                <div>
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                        <span class="ft-codigo" th:text="${ev.codigo}">EV</span>
+                        <span th:replace="~{fragments :: badge(${ev.estadoActual})}"></span>
+                        <span class="ft-tag"><i class="bi" th:classappend="${@ui.icono(ev.tipo)}"></i><span th:text="${@ui.etiqueta(ev.tipo)}">Tipo</span></span>
+                    </div>
+                    <h1 th:text="${@ui.recortar(ev.descripcion, 110)}">Descripción</h1>
+                    <p>Caso <a th:href="@{/casos/{id}(id=${ev.casoId})}" th:text="${ev.casoCodigo}">CASO</a> ·
+                       registrada por <span th:text="${ev.registradoPor}">correo</span></p>
+                </div>
+            </div>
+
+            <div class="alert alert-danger ft-alert" th:if="${ev.estadoActual == 'DESCARTADA'}">
+                <i class="bi bi-trash3"></i><div><strong>Evidencia descartada.</strong> <span th:text="${ev.motivoDescarte}">motivo</span></div></div>
+            <section class="ft-card mb-4" th:unless="${ev.estadoActual == 'DESCARTADA'}">
+                <div class="ft-card__body pt-2 pb-3">
+                    <div class="ft-pasos">
+                        <div class="ft-paso" th:each="paso, it : ${pasos}"
+                             th:classappend="${(paso.hecho ? 'hecho ' : '') + (paso.actual ? 'actual' : '')}">
+                            <div class="ft-paso__bola"><i class="bi bi-check-lg" th:if="${paso.hecho}"></i>
+                                <span th:unless="${paso.hecho}" th:text="${it.count}">1</span></div>
+                            <div th:text="${@ui.etiqueta(paso.estado)}">Estado</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div class="ft-panel-acciones" th:if="${hayAcciones}">
+                <div class="ft-acciones__titulo">Acciones disponibles para tu rol</div>
+                <div class="ft-acciones">
+                    <button th:if="${acciones['acta']}" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#mActa">
+                        <i class="bi bi-clipboard-check"></i>Acta de recolección</button>
+                    <button th:if="${acciones['entregar']}" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#mEntregar">
+                        <i class="bi bi-box-arrow-right"></i>Entregar a custodia</button>
+                    <button th:if="${acciones['recibir']}" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#mRecibir">
+                        <i class="bi bi-box-arrow-in-down"></i>Recibir en bodega</button>
+                    <button th:if="${acciones['trasladar']}" type="button" class="btn btn-soft" data-bs-toggle="modal" data-bs-target="#mTrasladar">
+                        <i class="bi bi-truck"></i>Trasladar</button>
+                    <th:block th:if="${acciones['devolver']}">
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#mDevolver"
+                                th:disabled="${!devolucionHabilitada}"><i class="bi bi-box-arrow-up"></i>Devolver</button>
+                        <span class="small text-muted align-self-center" th:unless="${devolucionHabilitada}">
+                            <i class="bi bi-info-circle"></i> Requiere cadena validada por el revisor legal</span>
+                    </th:block>
+                    <button th:if="${acciones['solicitar']}" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#mSolicitar">
+                        <i class="bi bi-send"></i>Solicitar análisis</button>
+                    <button th:if="${acciones['validar']}" type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#mValidar">
+                        <i class="bi bi-patch-check"></i>Validar cadena</button>
+                    <button th:if="${acciones['descartar']}" type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#mDescartar">
+                        <i class="bi bi-trash3"></i>Autorizar descarte</button>
+                </div>
+                <div class="small text-muted mt-2" th:if="${acciones['acta'] and ev.actaCompleta != true}">
+                    <i class="bi bi-info-circle"></i> Completa el acta para poder entregar la evidencia a custodia.</div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-8">
+                    <section class="ft-card">
+                        <div class="ft-card__head"><h2><i class="bi bi-card-text"></i>Descripción</h2></div>
+                        <div class="ft-card__body"><p class="mb-0" style="white-space: pre-line" th:text="${ev.descripcion}">Descripción</p></div>
+                    </section>
+
+                    <section class="ft-card">
+                        <div class="ft-card__head">
+                            <h2><i class="bi bi-clipboard-check"></i>Acta de recolección</h2>
+                            <span class="ft-badge t-verde" th:if="${ev.actaCompleta == true}">Completa</span>
+                            <span class="ft-badge t-ambar" th:unless="${ev.actaCompleta == true}">Pendiente</span>
+                        </div>
+                        <div class="ft-card__body">
+                            <dl class="ft-dl">
+                                <dt>Lugar del hallazgo</dt><dd th:text="${ev.lugarHallazgo != null ? ev.lugarHallazgo : '—'}">—</dd>
+                                <dt>Fecha del hallazgo</dt><dd th:text="${@ui.fecha(ev.fechaHallazgo)}">—</dd>
+                                <dt>Embalaje</dt><dd th:text="${ev.embalaje != null ? ev.embalaje : '—'}">—</dd>
+                                <dt>Observaciones</dt><dd th:text="${ev.observacionesRecoleccion != null ? ev.observacionesRecoleccion : '—'}">—</dd>
+                            </dl>
+                        </div>
+                    </section>
+
+                    <section class="ft-card" th:if="${puede.contains('CUSTODIA_VER')}">
+                        <div class="ft-card__head">
+                            <h2><i class="bi bi-link-45deg"></i>Cadena de custodia</h2>
+                            <span class="ft-badge t-ambar" th:if="${pendienteEntrega}">Sin entregar</span>
+                        </div>
+                        <div class="ft-card__body" th:unless="${#lists.isEmpty(movimientos)}">
+                            <ol class="ft-timeline">
+                                <li th:each="m : ${movimientos}">
+                                    <span class="ft-timeline__punto" th:classappend="${@ui.tono(m.tipo)}"><i class="bi" th:classappend="${@ui.icono(m.tipo)}"></i></span>
+                                    <div class="ft-timeline__titulo"><span th:text="${@ui.etiqueta(m.tipo)}">Tipo</span>
+                                        <span class="fw-normal text-muted">· <span th:text="${m.origen}">origen</span> → <span th:text="${m.destino}">destino</span></span></div>
+                                    <div class="ft-timeline__meta"><span th:text="${m.responsable}">responsable</span>
+                                        (<span th:text="${@ui.etiqueta(m.rolResponsable)}">rol</span>) · <span th:text="${@ui.fecha(m.fecha)}">fecha</span></div>
+                                    <div class="ft-timeline__texto" th:if="${m.observacion != null}" th:text="${m.observacion}">obs</div>
+                                </li>
+                            </ol>
+                        </div>
+                        <th:block th:if="${#lists.isEmpty(movimientos)}">
+                            <div th:replace="~{fragments :: vacio('bi-link-45deg', 'Aún no hay movimientos de custodia.')}"></div></th:block>
+                    </section>
+
+                    <section class="ft-card" th:if="${puede.contains('LAB_VER')}">
+                        <div class="ft-card__head"><h2><i class="bi bi-eyedropper"></i>Análisis de laboratorio</h2>
+                            <a class="btn btn-sm btn-soft" th:href="@{/laboratorio}">Ir al laboratorio</a></div>
+                        <ul class="ft-lista" th:unless="${#lists.isEmpty(solicitudes)}">
+                            <li th:each="s : ${solicitudes}" class="ft-lista__item">
+                                <span class="ft-lista__icono"><i class="bi bi-eyedropper"></i></span>
+                                <span class="flex-grow-1 min-w-0">
+                                    <span class="d-block fw-semibold"><span th:text="${s.codigo}">SOL</span> ·
+                                        <span th:text="${@ui.etiqueta(s.tipoAnalisis)}">tipo</span></span>
+                                    <span class="d-block small text-muted" th:text="${s.asignadoNombre != null ? 'Responsable: ' + s.asignadoNombre : 'Sin responsable asignado'}">resp</span>
+                                    <span class="d-block small mt-1" th:if="${s.conclusiones != null}" th:text="${'Conclusión: ' + @ui.recortar(s.conclusiones, 160)}">concl</span>
+                                </span>
+                                <span th:replace="~{fragments :: badge(${s.estado})}"></span>
+                            </li>
+                        </ul>
+                        <th:block th:if="${#lists.isEmpty(solicitudes)}">
+                            <div th:replace="~{fragments :: vacio('bi-eyedropper', 'Sin solicitudes de análisis.')}"></div></th:block>
+                    </section>
+                </div>
+
+                <div class="col-lg-4">
+                    <section class="ft-card">
+                        <div class="ft-card__head"><h2><i class="bi bi-info-circle"></i>Datos</h2></div>
+                        <div class="ft-card__body">
+                            <dl class="ft-dl">
+                                <dt>Caso</dt><dd><a th:href="@{/casos/{id}(id=${ev.casoId})}" th:text="${ev.casoCodigo}">CASO</a></dd>
+                                <dt>Tipo</dt><dd th:text="${@ui.etiqueta(ev.tipo)}">Tipo</dd>
+                                <dt>Registro</dt><dd th:text="${@ui.fecha(ev.fechaRegistro)}">fecha</dd>
+                                <dt>Actualizada</dt><dd th:text="${@ui.fecha(ev.fechaActualizacion)}">fecha</dd>
+                            </dl>
+                        </div>
+                    </section>
+
+                    <section class="ft-card" th:if="${puede.contains('CUSTODIA_VER')}">
+                        <div class="ft-card__head"><h2><i class="bi bi-patch-check"></i>Validación legal</h2></div>
+                        <div class="ft-card__body" th:unless="${#lists.isEmpty(validaciones)}">
+                            <div th:each="v, it : ${validaciones}" th:classappend="${!it.first} ? 'border-top pt-2 mt-2 opacity-75'">
+                                <span th:replace="~{fragments :: badge(${v.resultado})}"></span>
+                                <div class="small mt-1" th:text="${v.observacion}">obs</div>
+                                <div class="small text-muted"><span th:text="${v.revisor}">revisor</span> · <span th:text="${@ui.fecha(v.fecha)}">fecha</span></div>
+                            </div>
+                        </div>
+                        <div class="ft-card__body text-muted" th:if="${#lists.isEmpty(validaciones)}">Sin validación del revisor legal.</div>
+                    </section>
+
+                    <section class="ft-card">
+                        <div class="ft-card__head"><h2><i class="bi bi-clock-history"></i>Historial de estados</h2></div>
+                        <div class="ft-card__body" th:unless="${#lists.isEmpty(ev.historial)}">
+                            <ol class="ft-timeline">
+                                <li th:each="h : ${ev.historial}">
+                                    <span class="ft-timeline__punto" th:classappend="${@ui.tono(h.hacia)}"><i class="bi bi-arrow-right"></i></span>
+                                    <div class="ft-timeline__titulo" th:text="${@ui.etiqueta(h.hacia)}">Estado</div>
+                                    <div class="ft-timeline__meta"><span th:text="${h.usuario}">usuario</span> · <span th:text="${@ui.fecha(h.fecha)}">fecha</span></div>
+                                    <div class="small mt-1" th:if="${h.observacion != null}" th:text="${h.observacion}">obs</div>
+                                </li>
+                            </ol>
+                        </div>
+                        <div class="ft-card__body text-muted" th:if="${#lists.isEmpty(ev.historial)}">
+                            Evidencia registrada antes de la versión 2: sin historial detallado.</div>
+                    </section>
+                </div>
+            </div>
+
+            <!--/* Modales de acciones */-->
+            <div class="modal fade" id="mActa" tabindex="-1" aria-hidden="true" th:if="${acciones['acta']}">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <form class="modal-content needs-validation" method="post" novalidate th:action="@{/evidencias/{id}/acta(id=${ev.id})}">
+                        <div class="modal-header"><h5 class="modal-title"><i class="bi bi-clipboard-check"></i>Acta de recolección</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+                        <div class="modal-body">
+                            <div class="row g-3">
+                                <div class="col-md-7">
+                                    <label class="form-label" for="lugarHallazgo">Lugar del hallazgo</label>
+                                    <input class="form-control" id="lugarHallazgo" name="lugarHallazgo" maxlength="200" required th:value="${ev.lugarHallazgo}">
+                                    <div class="invalid-feedback">Indica el lugar.</div>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label" for="fechaHallazgo">Fecha y hora del hallazgo</label>
+                                    <input type="datetime-local" class="form-control" id="fechaHallazgo" name="fechaHallazgo" required data-max-ahora
+                                           th:value="${ev.fechaHallazgo != null and #strings.length(ev.fechaHallazgo) >= 16 ? #strings.substring(ev.fechaHallazgo, 0, 16) : ''}">
+                                    <div class="invalid-feedback">Indica una fecha que no sea futura.</div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label" for="embalaje">Embalaje y rotulado</label>
+                                    <input class="form-control" id="embalaje" name="embalaje" maxlength="200" required th:value="${ev.embalaje}"
+                                           placeholder="Bolsa de seguridad sellada, rótulo...">
+                                    <div class="invalid-feedback">Describe el embalaje.</div>
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label" for="observaciones">Observaciones</label>
+                                    <textarea class="form-control" id="observaciones" name="observaciones" rows="3" maxlength="1000"
+                                              th:text="${ev.observacionesRecoleccion}"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer"><button type="button" class="btn btn-soft" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Guardar acta</button></div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="modal fade" id="mEntregar" tabindex="-1" aria-hidden="true" th:if="${acciones['entregar']}">
+                <div class="modal-dialog modal-dialog-centered">
+                    <form class="modal-content" method="post" th:action="@{/evidencias/{id}/entrega(id=${ev.id})}">
+                        <div class="modal-header"><h5 class="modal-title"><i class="bi bi-box-arrow-right"></i>Entregar a custodia</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+                        <div class="modal-body">
+                            <label class="form-label" for="destinoEntrega">Destino</label>
+                            <input class="form-control mb-3" id="destinoEntrega" name="destino" maxlength="200" placeholder="Bodega de evidencias">
+                            <label class="form-label" for="obsEntrega">Observación</label>
+                            <textarea class="form-control" id="obsEntrega" name="observacion" rows="3" maxlength="1000"></textarea>
+                        </div>
+                        <div class="modal-footer"><button type="button" class="btn btn-soft" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Entregar</button></div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="modal fade" id="mRecibir" tabindex="-1" aria-hidden="true" th:if="${acciones['recibir']}">
+                <div class="modal-dialog modal-dialog-centered">
+                    <form class="modal-content needs-validation" method="post" novalidate th:action="@{/evidencias/{id}/recepcion(id=${ev.id})}">
+                        <div class="modal-header"><h5 class="modal-title"><i class="bi bi-box-arrow-in-down"></i>Recibir en bodega</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+                        <div class="modal-body">
+                            <label class="form-label" for="ubicacion">Ubicación en bodega</label>
+                            <input class="form-control" id="ubicacion" name="ubicacion" maxlength="200" required placeholder="Estante B-04, caja 12">
+                            <div class="invalid-feedback">La ubicación es obligatoria.</div>
+                            <label class="form-label mt-3" for="obsRecibir">Observación</label>
+                            <textarea class="form-control" id="obsRecibir" name="observacion" rows="3" maxlength="1000"></textarea>
+                        </div>
+                        <div class="modal-footer"><button type="button" class="btn btn-soft" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Recibir</button></div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="modal fade" id="mTrasladar" tabindex="-1" aria-hidden="true" th:if="${acciones['trasladar']}">
+                <div class="modal-dialog modal-dialog-centered">
+                    <form class="modal-content needs-validation" method="post" novalidate th:action="@{/evidencias/{id}/traslado(id=${ev.id})}">
+                        <div class="modal-header"><h5 class="modal-title"><i class="bi bi-truck"></i>Trasladar evidencia</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+                        <div class="modal-body">
+                            <label class="form-label" for="destinoTraslado">Destino</label>
+                            <input class="form-control" id="destinoTraslado" name="destino" maxlength="200" required placeholder="Laboratorio de química">
+                            <div class="invalid-feedback">El destino es obligatorio.</div>
+                            <label class="form-label mt-3" for="motivoTraslado">Motivo</label>
+                            <textarea class="form-control" id="motivoTraslado" name="motivo" rows="3" maxlength="1000" required></textarea>
+                            <div class="invalid-feedback">El motivo es obligatorio.</div>
+                        </div>
+                        <div class="modal-footer"><button type="button" class="btn btn-soft" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Registrar traslado</button></div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="modal fade" id="mDevolver" tabindex="-1" aria-hidden="true" th:if="${acciones['devolver'] and devolucionHabilitada}">
+                <div class="modal-dialog modal-dialog-centered">
+                    <form class="modal-content needs-validation" method="post" novalidate th:action="@{/evidencias/{id}/devolucion(id=${ev.id})}">
+                        <div class="modal-header"><h5 class="modal-title"><i class="bi bi-box-arrow-up"></i>Devolver evidencia</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+                        <div class="modal-body">
+                            <label class="form-label" for="destinatario">Destinatario</label>
+                            <input class="form-control" id="destinatario" name="destinatario" maxlength="200" required placeholder="Propietario / despacho judicial">
+                            <div class="invalid-feedback">El destinatario es obligatorio.</div>
+                            <label class="form-label mt-3" for="obsDevolver">Observación</label>
+                            <textarea class="form-control" id="obsDevolver" name="observacion" rows="3" maxlength="1000"></textarea>
+                        </div>
+                        <div class="modal-footer"><button type="button" class="btn btn-soft" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Devolver</button></div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="modal fade" id="mValidar" tabindex="-1" aria-hidden="true" th:if="${acciones['validar']}">
+                <div class="modal-dialog modal-dialog-centered">
+                    <form class="modal-content needs-validation" method="post" novalidate th:action="@{/evidencias/{id}/validacion(id=${ev.id})}">
+                        <div class="modal-header"><h5 class="modal-title"><i class="bi bi-patch-check"></i>Validar cadena de custodia</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+                        <div class="modal-body">
+                            <div class="row g-2 mb-3">
+                                <div class="col-6">
+                                    <input type="radio" class="btn-check" name="resultado" id="rValida" value="VALIDA" required>
+                                    <label class="ft-opcion" for="rValida"><i class="bi bi-patch-check"></i><div class="fw-semibold">Válida</div>
+                                        <div class="small text-muted">Sin irregularidades</div></label>
+                                </div>
+                                <div class="col-6">
+                                    <input type="radio" class="btn-check" name="resultado" id="rObservada" value="OBSERVADA" required>
+                                    <label class="ft-opcion" for="rObservada"><i class="bi bi-exclamation-diamond"></i><div class="fw-semibold">Observada</div>
+                                        <div class="small text-muted">Hay irregularidades</div></label>
+                                </div>
+                            </div>
+                            <label class="form-label" for="obsValidar">Observación</label>
+                            <textarea class="form-control" id="obsValidar" name="observacion" rows="3" maxlength="1000" required></textarea>
+                            <div class="invalid-feedback">Elige el resultado y escribe la observación.</div>
+                        </div>
+                        <div class="modal-footer"><button type="button" class="btn btn-soft" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Registrar validación</button></div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="modal fade" id="mSolicitar" tabindex="-1" aria-hidden="true" th:if="${acciones['solicitar']}">
+                <div class="modal-dialog modal-dialog-centered">
+                    <form class="modal-content needs-validation" method="post" novalidate th:action="@{/evidencias/{id}/solicitud-analisis(id=${ev.id})}">
+                        <div class="modal-header"><h5 class="modal-title"><i class="bi bi-send"></i>Solicitar análisis</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+                        <div class="modal-body">
+                            <p class="small text-muted" th:text="${ev.tipo == 'DIGITAL' ? 'Irá a un analista digital.' : 'Irá a un perito.'}">Destino</p>
+                            <label class="form-label" for="objetivo">Objetivo del análisis</label>
+                            <textarea class="form-control" id="objetivo" name="objetivo" rows="4" maxlength="1000" required></textarea>
+                            <div class="invalid-feedback">Describe qué debe analizarse.</div>
+                            <label class="form-label mt-3" for="prioridad">Prioridad</label>
+                            <select class="form-select" id="prioridad" name="prioridad" required>
+                                <option value="MEDIA" selected>Media</option>
+                                <option value="ALTA">Alta</option>
+                                <option value="BAJA">Baja</option>
+                            </select>
+                        </div>
+                        <div class="modal-footer"><button type="button" class="btn btn-soft" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-primary">Enviar solicitud</button></div>
+                    </form>
+                </div>
+            </div>
+
+            <th:block th:if="${acciones['descartar']}">
+                <div th:replace="~{fragments :: modalTexto('mDescartar', 'Autorizar descarte', 'bi-trash3', @{/evidencias/{id}/descarte(id=${ev.id})}, 'motivo', 'Motivo legal del descarte', true, 'Descartar evidencia', 'btn-danger')}"></div>
+            </th:block>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragments :: scripts}"></th:block>
+</body>
+</html>

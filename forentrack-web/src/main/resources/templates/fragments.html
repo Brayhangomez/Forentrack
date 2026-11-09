@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<!--/* Layout único de ForenTrack: cabecera, menú lateral por rol, barra superior, alertas, modales y scripts */-->
+
+<head th:fragment="head(titulo)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="'ForenTrack · ' + ${titulo}">ForenTrack</title>
+    <link rel="icon" type="image/svg+xml" th:href="@{/favicon.svg}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link th:href="@{/css/forentrack.css}" rel="stylesheet">
+</head>
+
+<body>
+
+<!--/* Menú lateral: los elementos salen de ModeloGlobal y ya vienen filtrados por el rol */-->
+<aside th:fragment="sidebar(activo)" class="ft-sidebar offcanvas-lg offcanvas-start" tabindex="-1" id="ftSidebar"
+       aria-label="Menú principal">
+    <div class="ft-sidebar__body">
+        <div class="ft-sidebar__top">
+            <a th:href="@{/panel}" class="ft-brand">
+                <span class="ft-brand__logo"><i class="bi bi-shield-lock"></i></span> ForenTrack
+            </a>
+            <button type="button" class="btn-close btn-close-white d-lg-none" data-bs-dismiss="offcanvas"
+                    data-bs-target="#ftSidebar" aria-label="Cerrar menú"></button>
+        </div>
+
+        <div class="ft-rolcard" th:if="${yo != null}">
+            <div class="ft-rolcard__label">Rol activo</div>
+            <div class="ft-rolcard__rol" th:text="${yo.rolEtiqueta}">Rol</div>
+        </div>
+
+        <nav>
+            <th:block th:each="item, it : ${menu}">
+                <div class="ft-nav__grupo" th:if="${it.first or menu[it.index - 1].grupo != item.grupo}"
+                     th:text="${item.grupo}">Grupo</div>
+                <a class="ft-nav__link" th:href="@{${item.enlace}}" th:classappend="${item.clave == activo} ? 'activo'"
+                   th:attr="aria-current=${item.clave == activo} ? 'page' : null">
+                    <i class="bi" th:classappend="${item.icono}"></i><span th:text="${item.etiqueta}">Opción</span>
+                </a>
+            </th:block>
+        </nav>
+
+        <div th:unless="${#lists.isEmpty(rapidas)}">
+            <div class="ft-nav__grupo">Acciones rápidas</div>
+            <a class="ft-rapida" th:each="r : ${rapidas}" th:href="@{${r.enlace}}">
+                <i class="bi" th:classappend="${r.icono}"></i><span th:text="${r.etiqueta}">Acción</span>
+            </a>
+        </div>
+
+        <div class="ft-sidebar__pie">
+            <div>ForenTrack 2.0 · prototipo académico</div>
+            <div>Datos ficticios</div>
+        </div>
+    </div>
+</aside>
+
+<!--/* Barra superior con el título de la página y el menú del usuario */-->
+<header th:fragment="topbar(titulo)" class="ft-topbar">
+    <button class="btn btn-soft btn-icon d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#ftSidebar"
+            aria-controls="ftSidebar" aria-label="Abrir menú"><i class="bi bi-list"></i></button>
+    <div class="ft-topbar__title" th:text="${titulo}">Título</div>
+    <div class="ms-auto d-flex align-items-center gap-2" th:if="${yo != null}">
+        <span class="ft-chip-rol d-none d-sm-inline" th:text="${yo.rolEtiqueta}">Rol</span>
+        <div class="dropdown">
+            <button class="ft-userbtn" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menú de usuario">
+                <span class="ft-avatar ft-avatar--sm" th:text="${@ui.iniciales(yo.nombre)}">AB</span>
+                <span class="d-none d-md-inline fw-medium" th:text="${yo.nombre}">Usuario</span>
+                <i class="bi bi-chevron-down small text-muted"></i>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end shadow border-0 p-2" style="min-width: 240px">
+                <div class="px-2 py-1">
+                    <div class="fw-semibold" th:text="${yo.nombre}">Usuario</div>
+                    <div class="small text-muted text-break" th:text="${yo.correo}">correo</div>
+                </div>
+                <hr class="my-2">
+                <form th:action="@{/logout}" method="post" class="m-0">
+                    <button type="submit" class="dropdown-item rounded-2 text-danger">
+                        <i class="bi bi-box-arrow-right me-2"></i>Cerrar sesión
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!--/* Mensajes de éxito, error de negocio (con detalle por campo) y avisos de carga parcial */-->
+<th:block th:fragment="alertas">
+    <div th:if="${ok}" class="alert alert-success alert-dismissible fade show ft-alert" role="status" data-autocerrar>
+        <i class="bi bi-check-circle-fill"></i>
+        <div class="flex-grow-1" th:text="${ok}">Operación realizada</div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show ft-alert" role="alert">
+        <i class="bi bi-exclamation-octagon-fill"></i>
+        <div class="flex-grow-1">
+            <div th:text="${error}">Error</div>
+            <ul th:if="${errores != null and !#maps.isEmpty(errores)}">
+                <li th:each="e : ${errores}" th:text="${e.value}">detalle</li>
+            </ul>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+    <div th:if="${aviso}" class="alert alert-warning ft-alert" role="status">
+        <i class="bi bi-cloud-slash"></i>
+        <div th:text="${aviso}">Aviso</div>
+    </div>
+</th:block>
+
+<!--/* Badge de estado/tipo con color según el valor */-->
+<span th:fragment="badge(valor)" class="ft-badge" th:classappend="${@ui.tono(valor)}"
+      th:text="${@ui.etiqueta(valor)}">Estado</span>
+
+<!--/* Estado vacío */-->
+<div th:fragment="vacio(icono, texto)" class="ft-vacio">
+    <i class="bi" th:classappend="${icono}"></i>
+    <div th:text="${texto}">Sin datos</div>
+</div>
+
+<!--/* Modal con un único campo de texto (notas, motivos, observaciones). Si accion es '' la pone el botón con data-url */-->
+<div th:fragment="modalTexto(id, titulo, icono, accion, campo, etiqueta, requerido, boton, tonoBoton)"
+     class="modal fade" th:id="${id}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <form class="modal-content needs-validation" method="post" th:action="${accion}" novalidate>
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi" th:classappend="${icono}"></i><span th:text="${titulo}">Título</span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="small text-muted mb-2" data-ref></div>
+                <label class="form-label" th:for="${id + '-' + campo}" th:text="${etiqueta}">Campo</label>
+                <textarea class="form-control" rows="4" maxlength="1000" th:id="${id + '-' + campo}" th:name="${campo}"
+                          th:required="${requerido}"></textarea>
+                <div class="invalid-feedback">Este campo es obligatorio.</div>
+                <div class="form-text" th:unless="${requerido}">Opcional.</div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-soft" data-bs-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn" th:classappend="${tonoBoton}" th:text="${boton}">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!--/* Modal de confirmación genérico + scripts */-->
+<th:block th:fragment="scripts">
+    <div class="modal fade" id="ftConfirmar" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-body text-center p-4">
+                    <div class="fs-1 text-warning mb-2"><i class="bi bi-question-circle"></i></div>
+                    <h5 class="mb-2">¿Confirmas la acción?</h5>
+                    <p class="text-muted mb-0" data-confirmar-texto>Esta acción quedará registrada en la auditoría.</p>
+                </div>
+                <div class="modal-footer justify-content-center border-0 pt-0 pb-4">
+                    <button type="button" class="btn btn-soft" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" data-confirmar-ok>Confirmar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/forentrack.js}"></script>
+</th:block>
+
+</body>
+</html>

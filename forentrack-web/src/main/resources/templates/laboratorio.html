@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Laboratorio')}"></head>
+<body>
+<div class="ft-app">
+    <aside th:replace="~{fragments :: sidebar('laboratorio')}"></aside>
+    <div class="ft-main">
+        <header th:replace="~{fragments :: topbar('Laboratorio')}"></header>
+        <main class="ft-content">
+            <th:block th:replace="~{fragments :: alertas}"></th:block>
+
+            <div class="ft-page-head">
+                <div>
+                    <h1>Laboratorio forense</h1>
+                    <p>Solicitudes de análisis: el jefe asigna, el perito o analista dictamina y el jefe aprueba.</p>
+                </div>
+                <div class="btn-group" th:if="${esAnalista}" role="group" aria-label="Alcance">
+                    <a class="btn" th:classappend="${soloMias} ? 'btn-primary' : 'btn-soft'" th:href="@{/laboratorio(mias=true,estado=${estadoSel})}">Mis asignaciones</a>
+                    <a class="btn" th:classappend="${!soloMias} ? 'btn-primary' : 'btn-soft'" th:href="@{/laboratorio(mias=false,estado=${estadoSel})}">Todas</a>
+                </div>
+            </div>
+
+            <section class="ft-card">
+                <nav class="ft-tabs" aria-label="Filtrar por estado">
+                    <a th:href="@{/laboratorio(mias=${soloMias})}" th:classappend="${estadoSel == null or estadoSel == ''} ? 'activo'">Todas</a>
+                    <a th:each="e : ${estados}" th:href="@{/laboratorio(estado=${e},mias=${soloMias})}"
+                       th:classappend="${e == estadoSel} ? 'activo'" th:text="${@ui.etiqueta(e)}">Estado</a>
+                </nav>
+                <div class="ft-card__body" th:unless="${#lists.isEmpty(solicitudes)}">
+                    <article class="ft-sol" th:each="s : ${solicitudes}">
+                        <div class="ft-sol__head">
+                            <span class="ft-codigo" th:text="${s.codigo}">SOL</span>
+                            <span th:replace="~{fragments :: badge(${s.estado})}"></span>
+                            <span class="ft-tag"><i class="bi" th:classappend="${s.tipoAnalisis == 'DIGITAL'} ? 'bi-cpu' : 'bi-search'"></i>
+                                <span th:text="'Análisis ' + ${@ui.etiqueta(s.tipoAnalisis)}">tipo</span></span>
+                            <span class="ft-badge ft-badge--plano" th:classappend="${@ui.tono(s.prioridad)}"
+                                  th:text="'Prioridad ' + ${@ui.etiqueta(s.prioridad)}">Prioridad</span>
+                            <a class="ms-auto small" th:href="@{/evidencias/{id}(id=${s.evidenciaId})}">
+                                <i class="bi bi-box-seam"></i> <span th:text="${s.evidenciaCodigo + ' · ' + s.casoCodigo}">EV</span></a>
+                        </div>
+                        <div class="ft-sol__body">
+                            <p class="mb-2" th:text="${s.objetivo}">Objetivo</p>
+                            <div class="row g-2 small text-muted">
+                                <div class="col-sm-6">Solicitada por <span class="text-body" th:text="${s.solicitadaPor}">inv</span>
+                                    · <span th:text="${@ui.fecha(s.fechaSolicitud)}">fecha</span></div>
+                                <div class="col-sm-6">Responsable:
+                                    <span class="text-body" th:text="${s.asignadoNombre != null ? s.asignadoNombre : 'sin asignar'}">resp</span></div>
+                            </div>
+                            <div class="mt-3" th:if="${s.hashSha256 != null}">
+                                <div class="small fw-semibold mb-1"><i class="bi bi-fingerprint"></i> SHA-256
+                                    <span class="text-muted fw-normal" th:text="${s.herramienta != null ? '· ' + s.herramienta : ''}"></span></div>
+                                <div class="ft-hash" th:text="${s.hashSha256}">hash</div>
+                            </div>
+                            <div class="row g-3 mt-1" th:if="${s.hallazgos != null}">
+                                <div class="col-md-6"><div class="small fw-semibold">Hallazgos</div>
+                                    <div class="small" style="white-space: pre-line" th:text="${s.hallazgos}">h</div></div>
+                                <div class="col-md-6"><div class="small fw-semibold">Conclusiones</div>
+                                    <div class="small" style="white-space: pre-line" th:text="${s.conclusiones}">c</div></div>
+                            </div>
+                            <div class="alert alert-warning ft-alert small mt-3 mb-0" th:if="${s.observacionRevision != null and s.estado == 'EN_PROCESO'}">
+                                <i class="bi bi-arrow-counterclockwise"></i><div><strong>Devuelto para corrección:</strong>
+                                <span th:text="${s.observacionRevision}">obs</span></div></div>
+                        </div>
+                        <div class="ft-sol__pie" th:unless="${#sets.isEmpty(acc[s.id])}">
+                            <button th:if="${acc[s.id].contains('asignarPericial')}" type="button" class="btn btn-sm btn-primary"
+                                    data-bs-toggle="modal" data-bs-target="#mAsignarPericial"
+                                    th:attr="data-url=@{/laboratorio/{id}/asignacion(id=${s.id})},data-ref=${s.codigo}">
+                                <i class="bi bi-diagram-3"></i>Asignar perito</button>
+                            <button th:if="${acc[s.id].contains('asignarDigital')}" type="button" class="btn btn-sm btn-primary"
+                                    data-bs-toggle="modal" data-bs-target="#mAsignarDigital"
+                                    th:attr="data-url=@{/laboratorio/{id}/asignacion(id=${s.id})},data-ref=${s.codigo}">
+                                <i class="bi bi-diagram-3"></i>Asignar analista</button>
+                            <form th:if="${acc[s.id].contains('iniciarPeritaje')}" method="post" th:action="@{/laboratorio/{id}/peritaje/inicio(id=${s.id})}"
+                                  data-confirmar="La evidencia pasará a EN ANÁLISIS."><button type="submit" class="btn btn-sm btn-primary">
+                                <i class="bi bi-search"></i>Iniciar peritaje</button></form>
+                            <form th:if="${acc[s.id].contains('iniciarDigital')}" method="post" th:action="@{/laboratorio/{id}/digital/inicio(id=${s.id})}"
+                                  data-confirmar="La evidencia pasará a EN ANÁLISIS."><button type="submit" class="btn btn-sm btn-primary">
+                                <i class="bi bi-cpu"></i>Iniciar análisis digital</button></form>
+                            <button th:if="${acc[s.id].contains('hash')}" type="button" class="btn btn-sm btn-soft" data-bs-toggle="modal"
+                                    data-bs-target="#mHash" th:attr="data-url=@{/laboratorio/{id}/digital/hash(id=${s.id})},data-ref=${s.codigo}">
+                                <i class="bi bi-fingerprint"></i><span th:text="${s.hashSha256 == null ? 'Registrar hash' : 'Actualizar hash'}">Hash</span></button>
+                            <button th:if="${acc[s.id].contains('dictamen')}" type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                                    data-bs-target="#mDictamen" th:attr="data-url=@{/laboratorio/{id}/peritaje/dictamen(id=${s.id})},data-ref=${s.codigo}">
+                                <i class="bi bi-file-earmark-text"></i>Emitir dictamen</button>
+                            <button th:if="${acc[s.id].contains('informe')}" type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                                    data-bs-target="#mInforme" th:attr="data-url=@{/laboratorio/{id}/digital/informe(id=${s.id})},data-ref=${s.codigo}">
+                                <i class="bi bi-file-earmark-binary"></i>Emitir informe</button>
+                            <button th:if="${acc[s.id].contains('aprobar')}" type="button" class="btn btn-sm btn-success" data-bs-toggle="modal"
+                                    data-bs-target="#mAprobar" th:attr="data-url=@{/laboratorio/{id}/aprobacion(id=${s.id})},data-ref=${s.codigo}">
+                                <i class="bi bi-check2-circle"></i>Aprobar</button>
+                            <button th:if="${acc[s.id].contains('rechazar')}" type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
+                                    data-bs-target="#mRechazar" th:attr="data-url=@{/laboratorio/{id}/rechazo(id=${s.id})},data-ref=${s.codigo}">
+                                <i class="bi bi-arrow-counterclockwise"></i>Devolver</button>
+                        </div>
+                        <div class="ft-sol__pie small text-muted" th:if="${s.estado == 'EN_PROCESO' and s.tipoAnalisis == 'DIGITAL' and s.hashSha256 == null and acc[s.id].contains('hash')}">
+                            <i class="bi bi-info-circle"></i> Registra el hash SHA-256 para poder emitir el informe.</div>
+                    </article>
+                </div>
+                <th:block th:if="${#lists.isEmpty(solicitudes)}">
+                    <div th:replace="~{fragments :: vacio('bi-eyedropper', 'No hay solicitudes con este filtro.')}"></div></th:block>
+            </section>
+
+            <!--/* Modales compartidos: el botón indica la URL (data-url) */-->
+            <th:block th:if="${puede.contains('LAB_ASIGNAR')}">
+                <div class="modal fade" id="mAsignarPericial" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <form class="modal-content needs-validation" method="post" novalidate action="">
+                            <div class="modal-header"><h5 class="modal-title"><i class="bi bi-diagram-3"></i>Asignar perito</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+                            <div class="modal-body">
+                                <div class="small text-muted mb-2" data-ref></div>
+                                <select class="form-select" name="responsableCorreo" required aria-label="Perito">
+                                    <option value="">Selecciona un perito</option>
+                                    <option th:each="x : ${peritos}" th:value="${x.correo}" th:text="${x.nombreCompleto + ' · ' + x.correo}">Perito</option>
+                                </select>
+                                <div class="invalid-feedback">Selecciona un perito.</div>
+                                <div class="small text-warning mt-2" th:if="${#lists.isEmpty(peritos)}">No hay peritos activos.</div>
+                            </div>
+                            <div class="modal-footer"><button type="button" class="btn btn-soft" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">Asignar</button></div>
+                        </form>
+                    </div>
+                </div>
+                <div class="modal fade" id="mAsignarDigital" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <form class="modal-content needs-validation" method="post" novalidate action="">
+                            <div class="modal-header"><h5 class="modal-title"><i class="bi bi-diagram-3"></i>Asignar analista digital</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+                            <div class="modal-body">
+                                <div class="small text-muted mb-2" data-ref></div>
+                                <select class="form-select" name="responsableCorreo" required aria-label="Analista digital">
+                                    <option value="">Selecciona un analista</option>
+                                    <option th:each="x : ${analistas}" th:value="${x.correo}" th:text="${x.nombreCompleto + ' · ' + x.correo}">Analista</option>
+                                </select>
+                                <div class="invalid-feedback">Selecciona un analista.</div>
+                                <div class="small text-warning mt-2" th:if="${#lists.isEmpty(analistas)}">No hay analistas digitales activos.</div>
+                            </div>
+                            <div class="modal-footer"><button type="button" class="btn btn-soft" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">Asignar</button></div>
+                        </form>
+                    </div>
+                </div>
+                <div th:replace="~{fragments :: modalTexto('mAprobar', 'Aprobar dictamen', 'bi-check2-circle', '', 'observacion', 'Observación', false, 'Aprobar', 'btn-success')}"></div>
+                <div th:replace="~{fragments :: modalTexto('mRechazar', 'Devolver dictamen', 'bi-arrow-counterclockwise', '', 'observacion', 'Qué debe corregirse', true, 'Devolver', 'btn-danger')}"></div>
+            </th:block>
+
+            <th:block th:if="${puede.contains('LAB_DICTAMEN') or puede.contains('LAB_INFORME')}">
+                <div class="modal fade" th:id="${puede.contains('LAB_DICTAMEN') ? 'mDictamen' : 'mInforme'}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <form class="modal-content needs-validation" method="post" novalidate action="">
+                            <div class="modal-header"><h5 class="modal-title"><i class="bi bi-file-earmark-text"></i>
+                                <span th:text="${puede.contains('LAB_DICTAMEN') ? 'Dictamen pericial' : 'Informe técnico digital'}">Dictamen</span></h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+                            <div class="modal-body">
+                                <div class="small text-muted mb-2" data-ref></div>
+                                <label class="form-label" for="hallazgos">Hallazgos</label>
+                                <textarea class="form-control mb-3" id="hallazgos" name="hallazgos" rows="5" maxlength="4000" required></textarea>
+                                <label class="form-label" for="conclusiones">Conclusiones</label>
+                                <textarea class="form-control" id="conclusiones" name="conclusiones" rows="4" maxlength="4000" required></textarea>
+                                <div class="invalid-feedback">Hallazgos y conclusiones son obligatorios.</div>
+                            </div>
+                            <div class="modal-footer"><button type="button" class="btn btn-soft" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">Emitir</button></div>
+                        </form>
+                    </div>
+                </div>
+            </th:block>
+
+            <th:block th:if="${puede.contains('LAB_HASH')}">
+                <div class="modal fade" id="mHash" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <form class="modal-content needs-validation" method="post" novalidate action="">
+                            <div class="modal-header"><h5 class="modal-title"><i class="bi bi-fingerprint"></i>Hash de integridad</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div>
+                            <div class="modal-body">
+                                <div class="small text-muted mb-2" data-ref></div>
+                                <label class="form-label" for="hashSha256">SHA-256 de la imagen forense</label>
+                                <input class="form-control ft-mono" id="hashSha256" name="hashSha256" required pattern="[a-fA-F0-9]{64}" maxlength="64"
+                                       placeholder="64 caracteres hexadecimales">
+                                <div class="invalid-feedback">Debe tener exactamente 64 caracteres hexadecimales.</div>
+                                <label class="form-label mt-3" for="herramienta">Herramienta de adquisición</label>
+                                <input class="form-control" id="herramienta" name="herramienta" required maxlength="120" placeholder="FTK Imager 4.7">
+                                <div class="invalid-feedback">Indica la herramienta.</div>
+                            </div>
+                            <div class="modal-footer"><button type="button" class="btn btn-soft" data-bs-dismiss="modal">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">Registrar hash</button></div>
+                        </form>
+                    </div>
+                </div>
+            </th:block>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragments :: scripts}"></th:block>
+</body>
+</html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Panel')}"></head>
+<body>
+<div class="ft-app">
+    <aside th:replace="~{fragments :: sidebar('panel')}"></aside>
+    <div class="ft-main">
+        <header th:replace="~{fragments :: topbar('Panel')}"></header>
+        <main class="ft-content">
+            <th:block th:replace="~{fragments :: alertas}"></th:block>
+
+            <div class="ft-page-head">
+                <div>
+                    <h1>Hola, <span th:text="${yo.nombre}">Usuario</span></h1>
+                    <p>Este es tu espacio de trabajo como <strong th:text="${yo.rolEtiqueta}">rol</strong>.</p>
+                </div>
+            </div>
+
+            <div class="alert alert-warning ft-alert" th:if="${panel.aviso() != null}">
+                <i class="bi bi-cloud-slash"></i><div th:text="${panel.aviso()}">Aviso</div></div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-xl-3" th:each="i : ${panel.indicadores()}">
+                    <div class="ft-card ft-kpi" th:classappend="${'t-' + i.tono()}">
+                        <div class="ft-kpi__icono"><i class="bi" th:classappend="${i.icono()}"></i></div>
+                        <div>
+                            <div class="ft-kpi__valor" th:text="${i.valor()}">0</div>
+                            <div class="ft-kpi__label" th:text="${i.etiqueta()}">Indicador</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-lg-7">
+                    <section class="ft-card">
+                        <div class="ft-card__head">
+                            <h2><i class="bi bi-inbox"></i><span th:text="${panel.tituloBandeja()}">Pendientes</span></h2>
+                        </div>
+                        <ul class="ft-lista" th:unless="${#lists.isEmpty(panel.bandeja())}">
+                            <li th:each="b : ${panel.bandeja()}">
+                                <a class="ft-lista__item" th:href="@{${b.enlace()}}">
+                                    <span class="ft-lista__icono"><i class="bi bi-arrow-right-short fs-5"></i></span>
+                                    <span class="flex-grow-1 min-w-0">
+                                        <span class="d-block fw-semibold text-truncate" th:text="${b.titulo()}">Título</span>
+                                        <span class="d-block small text-muted text-truncate" th:text="${b.detalle()}">Detalle</span>
+                                    </span>
+                                    <span th:replace="~{fragments :: badge(${b.estado()})}"></span>
+                                </a>
+                            </li>
+                        </ul>
+                        <th:block th:if="${#lists.isEmpty(panel.bandeja())}"><div th:replace="~{fragments :: vacio('bi-check2-all', 'No tienes pendientes por ahora.')}"></div></th:block>
+                    </section>
+                </div>
+
+                <div class="col-lg-5">
+                    <section class="ft-card">
+                        <div class="ft-card__head"><h2><i class="bi bi-star"></i>Tus acciones exclusivas</h2></div>
+                        <div class="ft-card__body py-2">
+                            <div class="ft-permiso ft-permiso--exclusivo" th:each="x : ${exclusivas}">
+                                <span class="ft-permiso__icono"><i class="bi" th:classappend="${x.icono}"></i></span>
+                                <div>
+                                    <div class="fw-semibold" th:text="${x.etiqueta}">Acción</div>
+                                    <div class="small text-muted" th:text="${x.descripcion}">Descripción</div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <section class="ft-card">
+                        <div class="ft-card__head"><h2><i class="bi bi-eye"></i>También puedes consultar</h2></div>
+                        <div class="ft-card__body d-flex flex-wrap gap-2">
+                            <span class="ft-tag" th:each="x : ${compartidas}">
+                                <i class="bi" th:classappend="${x.icono}"></i><span th:text="${x.etiqueta}">Consulta</span>
+                            </span>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragments :: scripts}"></th:block>
+</body>
+</html>

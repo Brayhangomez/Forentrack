@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Aviso')}"></head>
+<body>
+<main class="ft-error">
+    <div style="max-width: 520px">
+        <div class="ft-error__codigo" th:text="${status != null ? status : 'Ups'}">503</div>
+        <h1 class="h4 mt-3" th:switch="${status}">
+            <span th:case="403">Acceso denegado</span>
+            <span th:case="404">No encontramos lo que buscas</span>
+            <span th:case="409">La operación no es posible en este estado</span>
+            <span th:case="503">Servicio no disponible</span>
+            <span th:case="*">Algo salió mal</span>
+        </h1>
+        <p class="text-muted" th:if="${mensaje != null}" th:text="${mensaje}">Mensaje</p>
+        <p class="text-muted" th:if="${mensaje == null}" th:switch="${status}">
+            <span th:case="403">Tu rol no tiene permiso para abrir esta opción. Si crees que es un error, consulta al administrador.</span>
+            <span th:case="404">La página o el registro no existe o fue movido.</span>
+            <span th:case="503">Uno de los servicios no responde. Si está desplegado en Render puede estar despertando; intenta de nuevo en unos segundos.</span>
+            <span th:case="*">Ocurrió un error inesperado. Intenta de nuevo.</span>
+        </p>
+        <div class="d-flex gap-2 justify-content-center mt-4">
+            <button type="button" class="btn btn-soft" onclick="history.back()"><i class="bi bi-arrow-left"></i>Volver</button>
+            <a class="btn btn-primary" th:href="@{/panel}"><i class="bi bi-grid-1x2"></i>Ir al panel</a>
+        </div>
+    </div>
+</main>
+</body>
+</html>

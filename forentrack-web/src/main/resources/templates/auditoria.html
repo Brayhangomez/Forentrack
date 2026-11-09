@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments :: head('Auditoría')}"></head>
+<body>
+<div class="ft-app">
+    <aside th:replace="~{fragments :: sidebar('auditoria')}"></aside>
+    <div class="ft-main">
+        <header th:replace="~{fragments :: topbar('Auditoría')}"></header>
+        <main class="ft-content">
+            <th:block th:replace="~{fragments :: alertas}"></th:block>
+
+            <div class="ft-page-head">
+                <div>
+                    <h1>Bitácora de auditoría</h1>
+                    <p>Todas las acciones de los servicios, incluidos inicios de sesión y accesos denegados.</p>
+                </div>
+                <a class="btn btn-soft" th:href="@{${urlExportar}}" th:if="${puede.contains('AUDITORIA_EXPORTAR')}">
+                    <i class="bi bi-filetype-csv"></i>Exportar CSV</a>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-xl-3"><div class="ft-card ft-kpi t-azul">
+                    <div class="ft-kpi__icono"><i class="bi bi-journal-text"></i></div>
+                    <div><div class="ft-kpi__valor" th:text="${resumen.total}">0</div><div class="ft-kpi__label">Eventos</div></div></div></div>
+                <div class="col-6 col-xl-3"><div class="ft-card ft-kpi t-rojo">
+                    <div class="ft-kpi__icono"><i class="bi bi-shield-x"></i></div>
+                    <div><div class="ft-kpi__valor" th:text="${resumen.denegados}">0</div><div class="ft-kpi__label">Accesos denegados</div></div></div></div>
+                <div class="col-6 col-xl-3"><div class="ft-card ft-kpi t-ambar">
+                    <div class="ft-kpi__icono"><i class="bi bi-exclamation-triangle"></i></div>
+                    <div><div class="ft-kpi__valor" th:text="${resumen.fallidos}">0</div><div class="ft-kpi__label">Operaciones fallidas</div></div></div></div>
+                <div class="col-6 col-xl-3"><div class="ft-card ft-kpi t-violeta">
+                    <div class="ft-kpi__icono"><i class="bi bi-flag"></i></div>
+                    <div><div class="ft-kpi__valor" th:text="${resumen.pendientesRevision}">0</div><div class="ft-kpi__label">Alertas sin revisar</div></div></div></div>
+            </div>
+
+            <div class="row g-4">
+                <div class="col-xl-9">
+                    <section class="ft-card">
+                        <form th:action="@{/auditoria}" method="get" class="ft-filtros">
+                            <input type="search" name="usuario" class="form-control" style="max-width: 200px" placeholder="Usuario" th:value="${f['usuario']}" aria-label="Usuario">
+                            <input type="text" name="accion" class="form-control" style="max-width: 200px" placeholder="Acción (ej. CASO_CERRADO)" th:value="${f['accion']}" aria-label="Acción">
+                            <select name="servicio" class="form-select" style="max-width: 210px" aria-label="Servicio">
+                                <option value="">Todos los servicios</option>
+                                <option th:each="s : ${servicios}" th:value="${s}" th:text="${s}" th:selected="${s == f['servicio']}">servicio</option>
+                            </select>
+                            <select name="resultado" class="form-select" style="max-width: 160px" aria-label="Resultado">
+                                <option value="">Cualquier resultado</option>
+                                <option th:each="r : ${resultados}" th:value="${r}" th:text="${@ui.etiqueta(r)}" th:selected="${r == f['resultado']}">r</option>
+                            </select>
+                            <select name="revisado" class="form-select" style="max-width: 160px" aria-label="Revisión">
+                                <option value="">Revisados y no</option>
+                                <option value="false" th:selected="${f['revisado'] == 'false'}">Sin revisar</option>
+                                <option value="true" th:selected="${f['revisado'] == 'true'}">Revisados</option>
+                            </select>
+                            <input type="date" name="desde" class="form-control" style="max-width: 165px" th:value="${f['desde']}" aria-label="Desde">
+                            <input type="date" name="hasta" class="form-control" style="max-width: 165px" th:value="${f['hasta']}" aria-label="Hasta">
+                            <button type="submit" class="btn btn-soft"><i class="bi bi-funnel"></i>Filtrar</button>
+                            <a class="btn btn-link text-muted" th:href="@{/auditoria}">Limpiar</a>
+                        </form>
+                        <div class="table-responsive" th:unless="${#lists.isEmpty(eventos)}">
+                            <table class="table ft-table align-middle">
+                                <thead><tr><th>Fecha</th><th>Acción</th><th>Resultado</th><th>Usuario</th>
+                                    <th class="d-none d-lg-table-cell">Detalle</th><th>Revisión</th></tr></thead>
+                                <tbody>
+                                <tr th:each="e : ${eventos}">
+                                    <td class="ft-sub text-nowrap" th:text="${@ui.fecha(e.fecha)}">fecha</td>
+                                    <td><div class="ft-mono" th:text="${e.accion}">ACCION</div><div class="ft-sub" th:text="${e.servicio}">servicio</div></td>
+                                    <td><span th:replace="~{fragments :: badge(${e.resultado})}"></span></td>
+                                    <td><div th:text="${e.usuario != null ? e.usuario : 'anónimo'}">usuario</div>
+                                        <div class="ft-sub" th:text="${e.rol != null ? @ui.etiqueta(e.rol) : ''}">rol</div></td>
+                                    <td class="d-none d-lg-table-cell ft-sub" style="max-width: 280px">
+                                        <span th:text="${@ui.recortar(e.detalle, 110)}">detalle</span>
+                                        <div th:if="${e.recursoId != null}" class="ft-mono text-break" th:text="${(e.recursoTipo != null ? e.recursoTipo + ' ' : '') + e.recursoId}">rec</div></td>
+                                    <td>
+                                        <th:block th:if="${e.revisado == true}">
+                                            <span class="ft-badge t-verde" data-bs-toggle="tooltip" th:title="${e.observacionRevision}">Revisado</span>
+                                        </th:block>
+                                        <button th:if="${e.revisado != true and puede.contains('AUDITORIA_REVISAR')}" type="button"
+                                                class="btn btn-sm btn-soft" data-bs-toggle="modal" data-bs-target="#mRevision"
+                                                th:attr="data-url=@{/auditoria/{id}/revision(id=${e.id})},data-ref=${e.accion + ' · ' + @ui.fecha(e.fecha)}">
+                                            <i class="bi bi-flag"></i>Revisar</button>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <th:block th:if="${#lists.isEmpty(eventos)}">
+                            <div th:replace="~{fragments :: vacio('bi-journal-text', 'No hay eventos con esos filtros.')}"></div></th:block>
+                    </section>
+                </div>
+                <div class="col-xl-3">
+                    <section class="ft-card">
+                        <div class="ft-card__head"><h2><i class="bi bi-bar-chart"></i>Eventos por servicio</h2></div>
+                        <div class="ft-card__body">
+                            <div class="mb-3" th:each="s : ${resumen.porServicio}">
+                                <div class="d-flex justify-content-between small mb-1"><span th:text="${s.key}">servicio</span>
+                                    <strong th:text="${s.value}">0</strong></div>
+                                <div class="ft-barra"><span th:style="'width:' + ${resumen.total > 0 ? (s.value * 100 / resumen.total) : 0} + '%'"></span></div>
+                            </div>
+                            <div class="text-muted small" th:if="${#maps.isEmpty(resumen.porServicio)}">Sin datos todavía.</div>
+                        </div>
+                    </section>
+                    <section class="ft-card">
+                        <div class="ft-card__head"><h2><i class="bi bi-activity"></i>Acciones frecuentes</h2></div>
+                        <ul class="ft-lista small">
+                            <li th:each="a : ${resumen.accionesFrecuentes}" class="d-flex justify-content-between px-3 py-2">
+                                <a class="ft-mono text-decoration-none" th:href="@{/auditoria(accion=${a.key})}" th:text="${a.key}">ACCION</a>
+                                <span class="fw-semibold" th:text="${a.value}">0</span></li>
+                        </ul>
+                    </section>
+                </div>
+            </div>
+
+            <th:block th:if="${puede.contains('AUDITORIA_REVISAR')}">
+                <div th:replace="~{fragments :: modalTexto('mRevision', 'Registrar revisión', 'bi-flag', '', 'observacion', 'Hallazgo u observación', true, 'Marcar como revisado', 'btn-primary')}"></div>
+            </th:block>
+        </main>
+    </div>
+</div>
+<th:block th:replace="~{fragments :: scripts}"></th:block>
+</body>
+</html>
